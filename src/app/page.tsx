@@ -1,101 +1,132 @@
-import Image from "next/image";
+'use client';
+import { Container, Typography, Grid, Card, CardContent, Button, Box, AppBar, Toolbar } from '@mui/material';
+import BusinessIcon from '@mui/icons-material/Business';
+import SecurityIcon from '@mui/icons-material/Security';
+import SpeedIcon from '@mui/icons-material/Speed';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+
+const content = {
+  title: "Enterprise Solutions Inc.",
+  subtitle: "Transforming Businesses Through Technology",
+  description: "Enterprise Solutions Inc. is a leading provider of enterprise-grade software solutions. We help businesses streamline operations, enhance security, and drive digital transformation through innovative technology solutions.",
+  features: [
+    {
+      title: "Enterprise Software",
+      description: "Custom-built enterprise software solutions that scale with your business. Our platforms integrate seamlessly with your existing infrastructure.",
+      icon: <BusinessIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
+    },
+    {
+      title: "Cybersecurity",
+      description: "Industry-leading security protocols and compliance measures to protect your business data and maintain regulatory compliance.",
+      icon: <SecurityIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
+    },
+    {
+      title: "Performance Optimization",
+      description: "Advanced analytics and optimization solutions to enhance business performance and drive operational efficiency.",
+      icon: <SpeedIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
+    }
+  ],
+  contact: {
+    email: "contact@enterprisesolutions.com",
+    phone: "(888) 555-0123",
+    address: "100 Enterprise Way, Silicon Valley, CA 94025"
+  }
+};
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <>
+      <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: 'primary.main', fontWeight: 700 }}>
+            {content.title}
+          </Typography>
+          <Button color="primary">Contact Sales</Button>
+        </Toolbar>
+      </AppBar>
+      
+      <Container maxWidth="lg">
+        {/* Hero Section */}
+        <Box sx={{ textAlign: 'center', mt: 12, mb: 8 }}>
+          <Typography variant="h1" component="h1" gutterBottom>
+            {content.title}
+          </Typography>
+          <Typography variant="h5" color="text.secondary" gutterBottom sx={{ mb: 4 }}>
+            {content.subtitle}
+          </Typography>
+          <Button variant="contained" size="large" sx={{ mr: 2 }}>
+            Schedule Demo
+          </Button>
+          <Button variant="outlined" size="large">
+            Learn More
+          </Button>
+        </Box>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        {/* Description Section */}
+        <Card sx={{ mb: 8, backgroundColor: 'background.paper' }}>
+          <CardContent sx={{ py: 4 }}>
+            <Typography variant="body1" sx={{ maxWidth: '800px', mx: 'auto', textAlign: 'center' }}>
+              {content.description}
+            </Typography>
+          </CardContent>
+        </Card>
+
+        {/* Features Grid */}
+        <Grid container spacing={4} sx={{ mb: 8 }}>
+          {content.features.map((feature, index) => (
+            <Grid item xs={12} md={4} key={index}>
+              <Card sx={{ 
+                height: '100%', 
+                textAlign: 'center', 
+                p: 2,
+                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 4
+                }
+              }}>
+                <CardContent>
+                  {feature.icon}
+                  <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+                    {feature.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {feature.description}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Contact Section */}
+        <Card sx={{ mb: 8, backgroundColor: 'background.paper' }}>
+          <CardContent sx={{ py: 6 }}>
+            <Typography variant="h3" align="center" gutterBottom sx={{ mb: 4 }}>
+              Get in Touch
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <EmailIcon color="primary" />
+                <Typography>{content.contact.email}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <PhoneIcon color="primary" />
+                <Typography>{content.contact.phone}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <LocationOnIcon color="primary" />
+                <Typography>{content.contact.address}</Typography>
+              </Box>
+              <Button variant="contained" size="large" sx={{ mt: 3 }}>
+                Contact Sales Team
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Container>
+    </>
   );
 }
