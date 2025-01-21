@@ -1,3 +1,4 @@
+import { ClerkProvider } from '@clerk/nextjs';
 import ThemeRegistry from "../components/ThemeRegistry";
 
 export const metadata = {
@@ -13,7 +14,9 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body>
-                <ThemeRegistry>{children}</ThemeRegistry>
+                <ClerkProvider>
+                    <ThemeRegistry>{children}</ThemeRegistry>
+                </ClerkProvider>
             </body>
         </html>
     );
