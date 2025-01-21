@@ -2,25 +2,27 @@
 
 import { useEffect, useState } from 'react';
 import { Container, Typography, Box, Card, CardContent, Grid, LinearProgress } from '@mui/material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import StorageIcon from '@mui/icons-material/Storage';
 import SpeedIcon from '@mui/icons-material/Speed';
 import SecurityIcon from '@mui/icons-material/Security';
 import GroupIcon from '@mui/icons-material/Group';
 
-export default function DashboardPage() {
-  // Original LCP data
-  const [lcpData, setLcpData] = useState(null);
-  
-  // Monthly Active Users data
-  const userData = [
-    { month: 'Jan', users: 12500 },
-    { month: 'Feb', users: 13200 },
-    { month: 'Mar', users: 14800 },
-    { month: 'Apr', users: 15600 },
-    { month: 'May', users: 16900 },
-  ];
+// Define interfaces first
+interface LCPDataPoint {
+  date: string;
+  lcp: number;
+}
 
+interface LCPData {
+  variant_a: LCPDataPoint[];
+  variant_b: LCPDataPoint[];
+}
+
+export default function DashboardPage() {
+  // Original LCP data with proper typing
+  const [lcpData, setLcpData] = useState<LCPData | null>(null);
+  
   // System Health Data
   const healthData = [
     { name: 'Server Uptime', value: 99.99 },
@@ -38,7 +40,7 @@ export default function DashboardPage() {
   ];
 
   useEffect(() => {
-    const sampleData = {
+    const sampleData: LCPData = {
       variant_a: [
         {date: "2024-01-01", lcp: 2.1},
         {date: "2024-01-02", lcp: 2.3},

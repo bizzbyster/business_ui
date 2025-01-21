@@ -1,5 +1,5 @@
 // src/app/dashboard/layout.tsx
-import { AppBar, Toolbar, Typography, Box, IconButton, Avatar } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 import { UserButton } from "@clerk/nextjs";
 
 export default function DashboardLayout({
