@@ -30,7 +30,7 @@ export default function SupportPage() {
           Enterprise Solutions Support
         </Typography>
         <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 4 }}>
-          We're here to help you succeed with our enterprise solutions
+          We&apos;re here to help you succeed with our enterprise solutions
         </Typography>
       </Box>
 
