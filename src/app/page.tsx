@@ -5,7 +5,6 @@ import SecurityIcon from '@mui/icons-material/Security';
 import SpeedIcon from '@mui/icons-material/Speed';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
 import NavBar from '../components/NavBar';
 import HeroButtons from '../components/HeroButtons';
 import ContactButtons from '../components/ContactButtons';

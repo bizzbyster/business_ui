@@ -25,7 +25,7 @@ export default function Unauthorized() {
               mb: 2
             }}
           >
-            Oops! Looks like you're not logged in.
+            Oops! Looks like you&apos;re not logged in.
           </Typography>
 
           <Card sx={{ maxWidth: 600, mx: 'auto', mb: 4 }}>

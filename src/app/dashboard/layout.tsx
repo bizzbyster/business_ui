@@ -1,6 +1,6 @@
 "use client";
 
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 import { UserButton } from "@clerk/nextjs";
 import { branding } from "@/config/branding";
 
