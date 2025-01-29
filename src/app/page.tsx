@@ -5,38 +5,28 @@ import SecurityIcon from '@mui/icons-material/Security';
 import SpeedIcon from '@mui/icons-material/Speed';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
 import NavBar from '../components/NavBar';
 import HeroButtons from '../components/HeroButtons';
 import ContactButtons from '../components/ContactButtons';
+import { branding } from '../config/branding';
 
-const content = {
-  title: "Enterprise Solutions Inc.",
-  subtitle: "Transforming Businesses Through Technology",
-  description: "Enterprise Solutions Inc. is a leading provider of enterprise-grade software solutions. We help businesses streamline operations, enhance security, and drive digital transformation through innovative technology solutions.",
-  features: [
-    {
-      title: "Enterprise Software",
-      description: "Custom-built enterprise software solutions that scale with your business. Our platforms integrate seamlessly with your existing infrastructure.",
-      icon: <BusinessIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-    },
-    {
-      title: "Cybersecurity",
-      description: "Industry-leading security protocols and compliance measures to protect your business data and maintain regulatory compliance.",
-      icon: <SecurityIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-    },
-    {
-      title: "Performance Optimization",
-      description: "Advanced analytics and optimization solutions to enhance business performance and drive operational efficiency.",
-      icon: <SpeedIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-    }
-  ],
-  contact: {
-    email: "contact@enterprisesolutions.com",
-    phone: "(888) 555-0123",
-    address: "100 Enterprise Way, Silicon Valley, CA 94025"
+const features = [
+  {
+    title: "Website Performance",
+    description: branding.features[0],
+    icon: <SpeedIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
+  },
+  {
+    title: "Simple Integration",
+    description: branding.features[1],
+    icon: <BusinessIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
+  },
+  {
+    title: "Continuous Monitoring",
+    description: branding.features[2],
+    icon: <SecurityIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
   }
-};
+];
 
 export default function Home() {
   return (
@@ -60,7 +50,7 @@ export default function Home() {
               fontWeight: 700 
             }}
           >
-            {content.title}
+            {branding.companyName}
           </Typography>
           <Typography 
             variant="h5" 
@@ -73,7 +63,7 @@ export default function Home() {
               mx: 'auto'
             }}
           >
-            {content.subtitle}
+            {branding.companyTagline}
           </Typography>
           <HeroButtons />
         </Box>
@@ -90,14 +80,14 @@ export default function Home() {
                 px: { xs: 2, sm: 4 }
               }}
             >
-              {content.description}
+              {branding.companyDescription}
             </Typography>
           </CardContent>
         </Card>
 
         {/* Features Grid */}
         <Grid container spacing={4} sx={{ mb: 8 }} id="features">
-          {content.features.map((feature, index) => (
+          {features.map((feature, index) => (
             <Grid item xs={12} md={4} key={index}>
               <Card sx={{ 
                 height: '100%', 
@@ -145,15 +135,11 @@ export default function Home() {
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <EmailIcon color="primary" />
-                <Typography>{content.contact.email}</Typography>
+                <Typography>{branding.contactEmail}</Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <PhoneIcon color="primary" />
-                <Typography>{content.contact.phone}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <LocationOnIcon color="primary" />
-                <Typography>{content.contact.address}</Typography>
+                <Typography>{branding.contactPhone}</Typography>
               </Box>
               <ContactButtons />
             </Box>
@@ -172,7 +158,7 @@ export default function Home() {
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            © {new Date().getFullYear()} {content.title}. All rights reserved.
+            {branding.copyright}
           </Typography>
         </Box>
       </Container>
