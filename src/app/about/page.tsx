@@ -1,115 +1,104 @@
-// src/app/about/page.tsx
-import { Container, Typography, Card, CardContent, Box, Grid } from '@mui/material';
-import NavBar from '../../components/NavBar';
-import { branding } from '../../config/branding';
+"use client";
+
+import { Container, Typography, Box } from '@mui/material';
+import NavBar from '@/components/NavBar';
+import DomainForm from '@/components/DomainForm';
+import { branding } from '@/config/branding';
 
 export default function About() {
   return (
-    <>
+    <div>
       <NavBar />
-      <Container maxWidth="lg">
-        {/* Hero Section */}
+      <Container maxWidth={"lg"}>
         <Box sx={{ 
-          textAlign: 'center', 
-          mt: { xs: 8, md: 12 }, 
+          mt: { xs: 12, md: 16 }, 
           mb: 8,
           px: { xs: 2, sm: 0 }
         }}>
           <Typography 
             variant="h1" 
             component="h1" 
-            gutterBottom
             sx={{ 
-              fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem' },
-              fontWeight: 700 
+              fontSize: { xs: '2.5rem', sm: '3.5rem' },
+              fontWeight: 700,
+              mb: 8
             }}
           >
-            About {branding.companyName}
+            About Clippo
           </Typography>
-          <Typography 
-            variant="h5" 
-            color="text.secondary" 
-            sx={{ 
-              mb: 4,
-              fontSize: { xs: '1.2rem', sm: '1.5rem' },
-              maxWidth: '800px',
-              mx: 'auto'
-            }}
-          >
-            {branding.companyTagline}
-          </Typography>
-        </Box>
 
-        {/* Main Content */}
-        <Card sx={{ mb: 8, backgroundColor: 'background.paper' }}>
-          <CardContent sx={{ py: 4 }}>
+          <Typography variant="body1" sx={{ fontSize: '1.25rem', mb: 6, maxWidth: '800px' }}>
+            Clippo is pioneering the next generation of website performance optimization. We're building tools that help businesses deliver lightning-fast digital experiences through data-driven insights and automated optimizations. Our platform analyzes millions of data points to identify performance bottlenecks and provides actionable recommendations that enhance user experience and drive business growth.
+          </Typography>
+
+          <Typography variant="h2" sx={{ fontSize: '2rem', fontWeight: 600, mb: 4, mt: 8 }}>
+            Our Story
+          </Typography>
+
+          <Typography variant="body1" sx={{ fontSize: '1.25rem', mb: 6, maxWidth: '800px' }}>
+            Born from the frustration of managing complex performance optimization tools, our founders saw an opportunity to simplify website optimization. While working at leading tech companies, they witnessed firsthand how proper performance optimization could dramatically impact business success - but existing solutions were either too complex for small teams or too basic for serious businesses.
+          </Typography>
+
+          <Typography variant="body1" sx={{ fontSize: '1.25rem', mb: 6, maxWidth: '800px' }}>
+            Clippo was designed to bridge this gap, offering enterprise-grade performance optimization that's accessible to businesses of all sizes. We started with a simple question: "What if optimizing website performance was as easy as checking your email?" Today, we're turning that vision into reality.
+          </Typography>
+
+          <Typography variant="h2" sx={{ fontSize: '2rem', fontWeight: 600, mb: 4, mt: 8 }}>
+            Our Approach
+          </Typography>
+
+          <Typography variant="body1" sx={{ fontSize: '1.25rem', mb: 6, maxWidth: '800px' }}>
+            We believe that exceptional website performance shouldn't require a team of engineers. Our platform combines advanced analytics with machine learning to automatically identify optimization opportunities and implement improvements. We're currently in beta, working closely with select partners to refine our technology and ensure we deliver measurable results.
+          </Typography>
+
+          <Typography variant="h2" sx={{ fontSize: '2rem', fontWeight: 600, mb: 4, mt: 8 }}>
+            Looking Ahead
+          </Typography>
+
+          <Typography variant="body1" sx={{ fontSize: '1.25rem', mb: 6, maxWidth: '800px' }}>
+            The web is evolving rapidly, and performance optimization is more critical than ever. As we prepare for public launch, we're focused on building tools that will help businesses stay ahead of these changes. We're excited to work with forward-thinking companies who understand that website performance is not just about speed - it's about creating better digital experiences that drive business success.
+          </Typography>
+
+          <Box sx={{ 
+            my: 12, 
+            py: 8, 
+            borderTop: '1px solid', 
+            borderBottom: '1px solid', 
+            borderColor: 'divider',
+            backgroundColor: 'background.paper',
+            borderRadius: 2,
+            px: 4
+          }}>
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                fontSize: '2rem', 
+                fontWeight: 500, 
+                textAlign: 'center', 
+                mb: 3 
+              }}
+            >
+              Ready to transform your website's performance?
+            </Typography>
             <Typography 
               variant="body1" 
               sx={{ 
-                maxWidth: '800px', 
-                mx: 'auto', 
-                textAlign: 'center',
-                px: { xs: 2, sm: 4 },
-                mb: 4
+                fontSize: '1.25rem', 
+                textAlign: 'center', 
+                color: 'text.secondary',
+                mb: 6
               }}
             >
-              {branding.companyDescription}
+              Check if your site qualifies for our exclusive beta program.
             </Typography>
-
-            {/* Features Grid */}
-            <Grid container spacing={4} sx={{ mb: 4 }}>
-              {branding.features.map((feature, index) => (
-                <Grid item xs={12} md={6} key={index}>
-                  <Card sx={{ height: '100%' }}>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        Feature {index + 1}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {feature}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </CardContent>
-        </Card>
-
-        {/* Contact Section */}
-        <Card sx={{ mb: 8, backgroundColor: 'background.paper' }}>
-          <CardContent sx={{ py: 6, textAlign: 'center' }}>
-            <Typography variant="h4" gutterBottom>
-              Get in Touch
-            </Typography>
-            <Typography variant="body1">
-              Email: {branding.contactEmail}
-            </Typography>
-            <Typography variant="body1">
-              Phone: {branding.contactPhone}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              Support Hours: {branding.supportHours}
-            </Typography>
-          </CardContent>
-        </Card>
-
-        {/* Footer */}
-        <Box 
-          component="footer" 
-          sx={{ 
-            textAlign: 'center',
-            py: 4,
-            mt: 'auto',
-            borderTop: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <Typography variant="body2" color="text.secondary">
-            {branding.copyright}
-          </Typography>
+            
+            {/* Domain Form */}
+            <Box sx={{ maxWidth: '600px', mx: 'auto' }}>
+              <DomainForm />
+            </Box>
+          </Box>
         </Box>
       </Container>
-    </>
+    </div>
   );
-} 
+}
