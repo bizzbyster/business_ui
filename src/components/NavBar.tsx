@@ -23,11 +23,13 @@ export default function NavBar() {
             {branding.companyName}
           </Typography>
         </Link>
-        <Button component={Link} href="/sign-in" color="primary" sx={{ mr: 2 }}>
+        <Button 
+          component={Link} 
+          href="/sign-in" 
+          variant="contained"
+          color="primary"
+        >
           SIGN IN
-        </Button>
-        <Button component={Link} href="/sign-up" color="primary" variant="contained">
-          SIGN UP
         </Button>
       </Toolbar>
     </AppBar>

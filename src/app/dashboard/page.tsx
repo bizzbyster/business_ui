@@ -1,106 +1,94 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import {
-  Container,
-  Typography,
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  LinearProgress,
-} from "@mui/material";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-import StorageIcon from "@mui/icons-material/Storage";
-import SpeedIcon from "@mui/icons-material/Speed";
-import SecurityIcon from "@mui/icons-material/Security";
-import GroupIcon from "@mui/icons-material/Group";
-import { useUser } from "@clerk/nextjs"; // Added this import
+import { useEffect, useState } from 'react';
+import { Container, Typography, Box, Card, CardContent, Grid, LinearProgress, Chip } from '@mui/material';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import SpeedIcon from '@mui/icons-material/Speed';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import GroupIcon from '@mui/icons-material/Group';
+import { useUser } from '@clerk/nextjs';
 
-// Move data interfaces and static data outside component
-interface LCPDataPoint {
+interface PerformanceDataPoint {
   date: string;
-  lcp: number;
+  syntheticLCP: number;
+  realLCP: number;
+  syntheticConversion: number;
+  realConversion: number;
 }
 
-interface LCPData {
-  variant_a: LCPDataPoint[];
-  variant_b: LCPDataPoint[];
-}
-
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
-
-const healthData = [
-  { name: "Server Uptime", value: 99.99 },
-  { name: "API Response", value: 98.5 },
-  { name: "Database", value: 99.95 },
-  { name: "CDN", value: 99.8 },
+const sampleData: PerformanceDataPoint[] = [
+  {
+    date: '2024-01-01',
+    syntheticLCP: 2.8,
+    realLCP: 2.1,
+    syntheticConversion: 2.1,
+    realConversion: 3.2,
+  },
+  {
+    date: '2024-01-02',
+    syntheticLCP: 2.7,
+    realLCP: 2.0,
+    syntheticConversion: 2.2,
+    realConversion: 3.4,
+  },
 ];
 
-const resourceData = [
-  { name: "Storage", used: 75, total: 100 },
-  { name: "Memory", used: 60, total: 100 },
-  { name: "CPU", used: 45, total: 100 },
-  { name: "Bandwidth", used: 30, total: 100 },
+const quickStats = [
+  {
+    icon: SpeedIcon,
+    title: 'Avg LCP Improvement',
+    value: '42%',
+    change: '↑ With Clippo enabled',
+    color: 'success.main'
+  },
+  {
+    icon: TrendingUpIcon,
+    title: 'Conversion Rate',
+    value: '+15%',
+    change: '↑ After optimization',
+    color: 'success.main'
+  },
+  {
+    icon: MonetizationOnIcon,
+    title: 'Revenue Impact',
+    value: '$12.4k',
+    change: '↑ Additional MRR',
+    color: 'success.main'
+  },
+  {
+    icon: GroupIcon,
+    title: 'Active Sessions',
+    value: '5.2k',
+    change: '↑ 24% more engaged',
+    color: 'success.main'
+  }
 ];
 
-const sampleLCPData: LCPData = {
-  variant_a: [
-    { date: "2024-01-01", lcp: 2.1 },
-    { date: "2024-01-02", lcp: 2.3 },
-    { date: "2024-01-03", lcp: 1.9 },
-    { date: "2024-01-04", lcp: 2.0 },
-    { date: "2024-01-05", lcp: 1.8 },
-    { date: "2024-01-06", lcp: 1.7 },
-    { date: "2024-01-07", lcp: 1.6 },
-  ],
-  variant_b: [
-    { date: "2024-01-01", lcp: 1.8 },
-    { date: "2024-01-02", lcp: 1.7 },
-    { date: "2024-01-03", lcp: 1.6 },
-    { date: "2024-01-04", lcp: 1.5 },
-    { date: "2024-01-05", lcp: 1.4 },
-    { date: "2024-01-06", lcp: 1.3 },
-    { date: "2024-01-07", lcp: 1.2 },
-  ],
-};
+const webVitals = [
+  { metric: 'LCP', baseline: 2.8, optimized: 1.9, target: 2.5, unit: 'seconds' },
+  { metric: 'CLS', baseline: 0.15, optimized: 0.08, target: 0.1, unit: 'score' },
+  { metric: 'FID', baseline: 150, optimized: 80, target: 100, unit: 'ms' }
+];
 
-function StatsCard({
-  icon: Icon,
-  title,
-  value,
-  change,
-}: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  icon: any;
+interface StatsCardProps {
+  icon: React.ElementType;
   title: string;
   value: string;
   change: string;
-}) {
+  color: string;
+}
+
+function StatsCard({ icon: Icon, title, value, change, color }: StatsCardProps) {
   return (
     <Card>
       <CardContent>
-        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <Icon color="primary" sx={{ mr: 1 }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Icon sx={{ mr: 1, color }} />
           <Typography variant="h6">{title}</Typography>
         </Box>
         <Typography variant="h4">{value}</Typography>
-        <Typography
-          variant="body2"
-          color={change.includes("↑") ? "success.main" : "warning.main"}
-        >
+        <Typography variant="body2" color={color}>
           {change}
         </Typography>
       </CardContent>
@@ -109,139 +97,70 @@ function StatsCard({
 }
 
 export default function DashboardPage() {
-  const [lcpData, setLcpData] = useState<LCPData | null>(null);
-  const { user } = useUser(); // Added this line
+  const [performanceData, setPerformanceData] = useState<PerformanceDataPoint[]>([]);
+  const { user } = useUser();
+  const integrationStatus = "active";
 
   useEffect(() => {
-    // Simulate data fetch
-    setLcpData(sampleLCPData);
+    setPerformanceData(sampleData);
   }, []);
 
-  const combinedLcpData = lcpData?.variant_a.map((item, index) => ({
-    date: item.date,
-    "Variant A": item.lcp,
-    "Variant B": lcpData.variant_b[index].lcp,
-  }));
-
   return (
-    <Container maxWidth="lg">
-      {/* Added username title */}
-      <Typography
-        variant="h4"
-        component="h1"
-        sx={{
-          mb: 4,
-          fontWeight: 500,
-          px: 0,
-          py: 2,
-        }}
-      >
-        {user?.username || user?.firstName || "User"}&apos;s Monitoring
-      </Typography>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 500 }}>
+          {user?.username || user?.firstName || "User"}&apos;s Performance Dashboard
+        </Typography>
+        <Chip 
+          label={`Integration: ${integrationStatus}`}
+          color={integrationStatus === "active" ? "success" : "warning"}
+        />
+      </Box>
 
-      {/* Quick Stats */}
-      <Grid container spacing={3} sx={{ mt: 2, mb: 4 }}>
-        <Grid item xs={12} md={3}>
-          <StatsCard
-            icon={GroupIcon}
-            title="Active Users"
-            value="16.9k"
-            change="↑ 12% from last month"
-          />
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <StatsCard
-            icon={SpeedIcon}
-            title="Avg Response"
-            value="142ms"
-            change="↓ 8% improvement"
-          />
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <StatsCard
-            icon={SecurityIcon}
-            title="Security Score"
-            value="98%"
-            change="↑ 3% from audit"
-          />
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <StatsCard
-            icon={StorageIcon}
-            title="Storage Used"
-            value="75%"
-            change="↑ Approaching limit"
-          />
-        </Grid>
-      </Grid>
-
-      {/* Charts Section */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Performance Test Results
-              </Typography>
-              <Box sx={{ height: 300 }}>
-                {combinedLcpData && (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={combinedLcpData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis
-                        label={{
-                          value: "Seconds",
-                          angle: -90,
-                          position: "insideLeft",
-                        }}
-                      />
-                      <Tooltip />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="Variant A"
-                        stroke="#8884d8"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="Variant B"
-                        stroke="#82ca9e"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        {quickStats.map((stat, index) => (
+          <Grid item xs={12} md={3} key={index}>
+            <StatsCard {...stat} />
+          </Grid>
+        ))}
 
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                System Health
+                LCP vs Conversion Rate
               </Typography>
-              <Box sx={{ height: 300 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={healthData}
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {healthData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
+              <Box sx={{ height: 400 }}>
+                <ResponsiveContainer>
+                  <LineChart data={performanceData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
                     <Tooltip />
                     <Legend />
-                  </PieChart>
+                    <Line 
+                      yAxisId="left"
+                      type="monotone" 
+                      dataKey="syntheticLCP" 
+                      stroke="#8884d8" 
+                      name="Synthetic LCP"
+                    />
+                    <Line 
+                      yAxisId="left"
+                      type="monotone" 
+                      dataKey="realLCP" 
+                      stroke="#82ca9d" 
+                      name="Real-World LCP"
+                    />
+                    <Line 
+                      yAxisId="right"
+                      type="monotone" 
+                      dataKey="realConversion" 
+                      stroke="#ff7300" 
+                      name="Conversion Rate"
+                    />
+                  </LineChart>
                 </ResponsiveContainer>
               </Box>
             </CardContent>
@@ -252,30 +171,43 @@ export default function DashboardPage() {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Resource Usage
+                Core Web Vitals Comparison
               </Typography>
-              {resourceData.map((resource) => (
-                <Box key={resource.name} sx={{ my: 2 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      mb: 1,
-                    }}
-                  >
-                    <Typography variant="body2">{resource.name}</Typography>
-                    <Typography variant="body2">{resource.used}%</Typography>
+              <Box sx={{ height: 300 }}>
+                <ResponsiveContainer>
+                  <BarChart data={webVitals}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="metric" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="baseline" name="Before Clippo" fill="#8884d8" />
+                    <Bar dataKey="optimized" name="With Clippo" fill="#82ca9d" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Real-Time Monitoring Status
+              </Typography>
+              {webVitals.map((vital) => (
+                <Box key={vital.metric} sx={{ my: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography>{vital.metric}</Typography>
+                    <Typography>
+                      {vital.optimized} {vital.unit} / Target: {vital.target} {vital.unit}
+                    </Typography>
                   </Box>
                   <LinearProgress
                     variant="determinate"
-                    value={resource.used}
-                    color={
-                      resource.used > 80
-                        ? "error"
-                        : resource.used > 60
-                        ? "warning"
-                        : "primary"
-                    }
+                    value={(vital.optimized / vital.target) * 100}
+                    color={vital.optimized <= vital.target ? "success" : "warning"}
                   />
                 </Box>
               ))}

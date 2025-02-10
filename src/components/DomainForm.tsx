@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState } from "react";
@@ -74,7 +73,7 @@ export default function DomainForm() {
     <Card sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
       <CardContent>
         <Typography variant="h4" gutterBottom align="center">
-          Evaluate your site&apos;s compatibility
+          Check if your site qualifies for beta
         </Typography>
         <form onSubmit={handleSubmit}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
