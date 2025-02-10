@@ -1,20 +1,18 @@
-"use client";
-
+// src/app/page.tsx
 import { Container, Typography, Grid, Card, CardContent, Box } from '@mui/material';
 import BusinessIcon from '@mui/icons-material/Business';
 import SecurityIcon from '@mui/icons-material/Security';
 import SpeedIcon from '@mui/icons-material/Speed';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
-import NavBar from '@/components/NavBar';  // Fixed import path
-import HeroButtons from '@/components/HeroButtons';
-import ContactButtons from '@/components/ContactButtons';
-import DomainForm from '@/components/DomainForm';
-import { branding } from '@/config/branding';  // Fixed import path
+import NavBar from '../components/NavBar';
+import HeroButtons from '../components/HeroButtons';
+import ContactButtons from '../components/ContactButtons';
+import { branding } from '../config/branding';
 
 const features = [
   {
-    title: "Improved Performance",
+    title: "Website Performance",
     description: branding.features[0],
     icon: <SpeedIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
   },
@@ -33,7 +31,6 @@ const features = [
 export default function Home() {
   return (
     <>
-      {/* Fixed NavBar syntax */}
       <NavBar />
       
       <Container maxWidth="lg">
@@ -116,11 +113,6 @@ export default function Home() {
           ))}
         </Grid>
 
-        {/* Domain Form - Moved here */}
-        <Box sx={{ mb: 8 }}>
-          <DomainForm />
-        </Box>
-
         {/* Contact Section */}
         <Card sx={{ mb: 8, backgroundColor: 'background.paper' }}>
           <CardContent sx={{ py: 6 }}>
@@ -133,7 +125,7 @@ export default function Home() {
                 fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
               }}
             >
-              Questions?
+              Get in Touch
             </Typography>
             <Box sx={{ 
               display: 'flex', 
