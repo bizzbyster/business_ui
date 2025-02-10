@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
 
-const unauthenticatedUrl = `${process.env.BASE_URL}/unauthorized`;
+const unauthenticatedUrl = `https://snappi.ai/unauthorized`;
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req))
