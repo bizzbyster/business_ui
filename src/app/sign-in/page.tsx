@@ -12,7 +12,17 @@ export default function SignInPage() {
         justifyContent: 'center',
         py: 8 
       }}>
-        <Typography variant="h1" component="h1" gutterBottom align="center" sx={{ mb: 4 }}>
+        <Typography 
+          variant="h1" 
+          component="h1" 
+          gutterBottom 
+          align="center" 
+          sx={{ 
+            mb: 4,
+            fontSize: { xs: '2rem', sm: '2.5rem' },
+            fontWeight: 500
+          }}
+        >
           Sign In
         </Typography>
         
@@ -37,7 +47,8 @@ export default function SignInPage() {
                     "bg-primary hover:bg-primary-dark focus:shadow-primary-focus",
                 }
               }}
-              redirectUrl="/dashboard"
+              redirectUrl="/dashboard"  // This ensures regular sign-ins go to dashboard
+              afterSignInUrl="/dashboard"  // Double ensuring dashboard redirect
             />
           </CardContent>
         </Card>
