@@ -6,7 +6,7 @@ export const branding = {
   companyTagline:
     "Innovative technology solutions for tomorrow's digital success",
   companyDescription:
-    "Clippo leverages cutting-edge technology to transform your digital presence into a seamless ecosystem of optimized business outcomes.",
+    "Clippo delivers a faster website experience through cutting-edge technology, driving increased engagement and optimized business outcomes.",
   primaryColor: "#4A90E2",
   secondaryColor: "#F5A623",
   logoUrl: "/images/logo.png",

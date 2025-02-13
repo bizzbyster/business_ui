@@ -49,7 +49,8 @@ export default function SignUpPage() {
                   formFieldInput: "w-full"
                 }
               }}
-              afterSignUpUrl="/onboarding"  // Changed from forceRedirectUrl
+              afterSignUpUrl="/dashboard"
+              afterSignInUrl="/dashboard"
             />
           </CardContent>
         </Card>

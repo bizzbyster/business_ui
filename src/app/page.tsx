@@ -65,7 +65,7 @@ export default function Home() {
              mx: 'auto'
            }}
          >
-           Get instant insights and optimizations to boost your site`&apos;`s speed, user experience, and conversion rates.
+           Boost your site&apos;s speed and harvest better conversion rates.
          </Typography>
          
          {/* Domain Form */}
@@ -144,7 +144,7 @@ export default function Home() {
                lineHeight: 1.2
              }}
            >
-             Be among the first to optimize your website with our cutting-edge beta. Coming soon.
+             Why is site speed so important? Discover how Clippo makes sites faster.
            </Typography>
            
            <Box sx={{ 
