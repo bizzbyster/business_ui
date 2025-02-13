@@ -60,7 +60,7 @@ export async function POST(req: Request) {
           const reportEmail = await resend.emails.send({
             from: 'onboarding@resend.dev',
             to: email,
-            subject: `Clippo Performance Analysis for ${domain}`,
+            subject: `Performance Analysis for ${domain}`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h1 style="color: #333; font-size: 24px;">Performance Analysis Report for ${domain}</h1>
@@ -99,7 +99,7 @@ export async function POST(req: Request) {
 
                 <div style="text-align: center; margin-top: 30px;">
                   <a 
-                    href="${BASE_URL}/sign-up" 
+                    href="${BASE_URL}/dashboard" 
                     style="
                       display: inline-block; 
                       padding: 12px 24px; 
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
               </div>
             `
           });
-          console.log('Report email sent:', reportEmail.id);
+          console.log('Report email sent successfully');
           resolve(reportEmail);
         } catch (error) {
           console.error('Report email error:', error);
@@ -127,7 +127,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       message: 'Analysis initiated. Report will be delivered in 1 minute.',
-      confirmationEmailId: confirmationEmail.id
+      status: 'success'
     });
 
   } catch (error: any) {
