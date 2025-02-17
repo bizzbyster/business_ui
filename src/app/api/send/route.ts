@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     }
 
     // Send confirmation email
-    const confirmationEmail = await resend.emails.send({
+    await resend.emails.send({
       from: 'onboarding@resend.dev',
       to: email,
       subject: 'Analyzing Your Website Performance',
@@ -48,82 +48,74 @@ export async function POST(req: Request) {
         </ul>
         <p>Get ready to discover opportunities to significantly improve your site's speed and user experience.</p>
       `
-    }).catch(error => {
-      console.error('Confirmation email error:', error);
-      throw new Error('Failed to send confirmation email');
     });
 
-    // Schedule the report email with 1 minute delay
-    const scheduleReport = new Promise((resolve, reject) => {
-      setTimeout(async () => {
-        try {
-          const reportEmail = await resend.emails.send({
-            from: 'onboarding@resend.dev',
-            to: email,
-            subject: `Performance Analysis for ${domain}`,
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1 style="color: #333; font-size: 24px;">Performance Analysis Report for ${domain}</h1>
-                
-                <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <h2 style="color: #2e7d32; margin-top: 0;">Core Web Vitals Summary:</h2>
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                    <div style="flex: 1;">
-                      <h3 style="margin: 0; color: #666;">LCP (Largest Contentful Paint)</h3>
-                      <p style="font-size: 24px; margin: 5px 0; color: #2e7d32;">1.8s</p>
-                      <p style="color: #666; margin: 0;">Improved from 4.2s</p>
-                    </div>
-                    <div style="flex: 1;">
-                      <h3 style="margin: 0; color: #666;">FCP (First Contentful Paint)</h3>
-                      <p style="font-size: 24px; margin: 5px 0; color: #2e7d32;">0.9s</p>
-                      <p style="color: #666; margin: 0;">Improved from 2.8s</p>
-                    </div>
-                  </div>
+    // Schedule the delayed email without awaiting it
+    setTimeout(() => {
+      resend.emails.send({
+        from: 'onboarding@resend.dev',
+        to: email,
+        subject: `Performance Analysis for ${domain}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #333; font-size: 24px;">Performance Analysis Report for ${domain}</h1>
+            
+            <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h2 style="color: #2e7d32; margin-top: 0;">Core Web Vitals Summary:</h2>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                  <h3 style="margin: 0; color: #666;">LCP (Largest Contentful Paint)</h3>
+                  <p style="font-size: 24px; margin: 5px 0; color: #2e7d32;">1.8s</p>
+                  <p style="color: #666; margin: 0;">Improved from 4.2s</p>
                 </div>
-
-                <h2 style="color: #333;">Business Impact:</h2>
-                <ul style="color: #666;">
-                  <li>Estimated Revenue Loss: $12,000/month due to slow loading</li>
-                  <li>Potential Conversion Rate Increase: +28% with optimizations</li>
-                  <li>Mobile Traffic Drop-off Rate: 35% due to performance issues</li>
-                </ul>
-
-                <h2 style="color: #333;">Ready to boost your website's speed?</h2>
-                <p style="color: #666;">Start your free trial with Clippo today and transform your website into a high-performance revenue engine. Our automated optimizations can help you:</p>
-                <ul style="color: #666;">
-                  <li>Reduce loading times by up to 65%</li>
-                  <li>Improve Core Web Vitals scores</li>
-                  <li>Boost mobile conversion rates</li>
-                  <li>Enhance SEO rankings</li>
-                </ul>
-
-                <div style="text-align: center; margin-top: 30px;">
-                  <a 
-                    href="${BASE_URL}/dashboard" 
-                    style="
-                      display: inline-block; 
-                      padding: 12px 24px; 
-                      background-color: #2e7d32; 
-                      color: white; 
-                      text-decoration: none; 
-                      border-radius: 4px;
-                      font-weight: 500;
-                    "
-                  >
-                    View Your Dashboard
-                  </a>
+                <div style="flex: 1;">
+                  <h3 style="margin: 0; color: #666;">FCP (First Contentful Paint)</h3>
+                  <p style="font-size: 24px; margin: 5px 0; color: #2e7d32;">0.9s</p>
+                  <p style="color: #666; margin: 0;">Improved from 2.8s</p>
                 </div>
               </div>
-            `
-          });
-          console.log('Report email sent successfully');
-          resolve(reportEmail);
-        } catch (error) {
-          console.error('Report email error:', error);
-          reject(error);
-        }
-      }, 60000); // 1 minute
-    });
+            </div>
+
+            <h2 style="color: #333;">Business Impact:</h2>
+            <ul style="color: #666;">
+              <li>Estimated Revenue Loss: $12,000/month due to slow loading</li>
+              <li>Potential Conversion Rate Increase: +28% with optimizations</li>
+              <li>Mobile Traffic Drop-off Rate: 35% due to performance issues</li>
+            </ul>
+
+            <h2 style="color: #333;">Ready to boost your website's speed?</h2>
+            <p style="color: #666;">Start your free trial with Clippo today and transform your website into a high-performance revenue engine. Our automated optimizations can help you:</p>
+            <ul style="color: #666;">
+              <li>Reduce loading times by up to 65%</li>
+              <li>Improve Core Web Vitals scores</li>
+              <li>Boost mobile conversion rates</li>
+              <li>Enhance SEO rankings</li>
+            </ul>
+
+            <div style="text-align: center; margin-top: 30px;">
+              <a 
+                href="${BASE_URL}/dashboard" 
+                style="
+                  display: inline-block; 
+                  padding: 12px 24px; 
+                  background-color: #2e7d32; 
+                  color: white; 
+                  text-decoration: none; 
+                  border-radius: 4px;
+                  font-weight: 500;
+                "
+              >
+                View Your Dashboard
+              </a>
+            </div>
+          </div>
+        `
+      }).then(() => {
+        console.log('Analysis report email sent successfully');
+      }).catch((error) => {
+        console.error('Error sending analysis report:', error);
+      });
+    }, 60000); // 1 minute delay
 
     return NextResponse.json({
       message: 'Analysis initiated. Report will be delivered in 1 minute.',
