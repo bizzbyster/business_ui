@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from 'next/navigation';
 import {
   Box,
   TextField,
@@ -9,26 +10,20 @@ import {
   Card,
   CardContent,
   Alert,
-  Snackbar,
 } from "@mui/material";
 
 export default function DomainForm() {
+  const router = useRouter();
   const [domain, setDomain] = useState("");
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [alert, setAlert] = useState<{
-    open: boolean;
-    message: string;
-    severity: "success" | "error";
-  }>({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+  const [error, setError] = useState("");
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError("");
 
     try {
       const response = await fetch("/api/send", {
@@ -43,30 +38,13 @@ export default function DomainForm() {
         throw new Error("Failed to send analysis request");
       }
 
-      // Show success message
-      setAlert({
-        open: true,
-        message: "Analysis started! Check your email for updates.",
-        severity: "success",
-      });
-
-      // Reset form
-      setDomain("");
-      setEmail("");
+      // Redirect to submitted page using BASE_URL
+      window.location.href = `${baseUrl}/submitted-eval`;
+      
     } catch (error) {
-      // Show error message
-      setAlert({
-        open: true,
-        message: "Something went wrong. Please try again.",
-        severity: "error",
-      });
-    } finally {
+      setError("Something went wrong. Please try again.");
       setIsSubmitting(false);
     }
-  };
-
-  const handleCloseAlert = () => {
-    setAlert((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -94,6 +72,11 @@ export default function DomainForm() {
               required
               fullWidth
             />
+            {error && (
+              <Alert severity="error" sx={{ width: "100%" }}>
+                {error}
+              </Alert>
+            )}
             <Button
               type="submit"
               variant="contained"
@@ -101,26 +84,11 @@ export default function DomainForm() {
               disabled={isSubmitting}
               size="large"
             >
-              {isSubmitting ? "Processing..." : "Get Free Analysis in 10 mins"}
+              {isSubmitting ? "Processing..." : "Get Free Analysis in 1 min"}
             </Button>
           </Box>
         </form>
       </CardContent>
-
-      <Snackbar
-        open={alert.open}
-        autoHideDuration={6000}
-        onClose={handleCloseAlert}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleCloseAlert}
-          severity={alert.severity}
-          sx={{ width: "100%" }}
-        >
-          {alert.message}
-        </Alert>
-      </Snackbar>
     </Card>
   );
 }
