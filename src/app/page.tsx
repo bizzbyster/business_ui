@@ -65,7 +65,7 @@ export default function Home() {
              mx: 'auto'
            }}
          >
-           Boost your site&apos;s speed and harvest better conversion rates.
+           Boost your site&apos;s speed and unlock better conversion rates.
          </Typography>
          
          {/* Domain Form */}
