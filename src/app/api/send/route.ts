@@ -1,17 +1,17 @@
-import { Resend } from 'resend';
-import { NextResponse } from 'next/server';
+import { Resend } from "resend";
+import { NextResponse } from "next/server";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = new Resend(resendApiKey);
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = "http://localhost:3000";
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(req: Request) {
   if (!resendApiKey) {
-    console.error('RESEND_API_KEY is not configured');
+    console.error("RESEND_API_KEY is not configured");
     return NextResponse.json(
-      { error: 'Email service not configured' },
+      { error: "Email service not configured" },
       { status: 500 }
     );
   }
@@ -21,23 +21,23 @@ export async function POST(req: Request) {
 
     if (!domain || !email) {
       return NextResponse.json(
-        { error: 'Domain and email are required' },
+        { error: "Domain and email are required" },
         { status: 400 }
       );
     }
 
-    if (!email.includes('@')) {
+    if (!email.includes("@")) {
       return NextResponse.json(
-        { error: 'Invalid email format' },
+        { error: "Invalid email format" },
         { status: 400 }
       );
     }
 
     // Send first email immediately
     await resend.emails.send({
-      from: 'onboarding@snappi.ai',
+      from: "onboarding@snappi.ai",
       to: email,
-      subject: 'Analyzing Your Website Performance',
+      subject: "Analyzing Your Website Performance",
       html: `
         <h1>Analyzing ${domain}'s Performance</h1>
         <p>We're running a comprehensive speed analysis of your website. Your detailed performance report will be ready in approximately 1 minute.</p>
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
           <li>Performance bottlenecks</li>
         </ul>
         <p>Get ready to discover opportunities to significantly improve your site's speed and user experience.</p>
-      `
+      `,
     });
 
     // Schedule second email in the background
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       try {
         await delay(60000);
         await resend.emails.send({
-          from: 'onboarding@snappi.ai',
+          from: "onboarding@snappi.ai",
           to: email,
           subject: `Performance Analysis for ${domain}`,
           html: `
@@ -113,29 +113,25 @@ export async function POST(req: Request) {
                 </a>
               </div>
             </div>
-          `
+          `,
         });
-        console.log('Analysis report sent successfully');
+        console.log("Analysis report sent successfully");
       } catch (error) {
-        console.error('Error sending second email:', error);
+        console.error("Error sending second email:", error);
       }
     })();
 
     // Return success immediately, don't wait for second email
     return NextResponse.json({
-      message: 'Analysis initiated. Report will be delivered in 1 minute.',
-      status: 'success'
+      message: "Analysis initiated. Report will be delivered in 1 minute.",
+      status: "success",
     });
-
   } catch (error: any) {
-    console.error('API route error:', error);
-    
-    const errorMessage = error.message || 'Failed to process request';
+    console.error("API route error:", error);
+
+    const errorMessage = error.message || "Failed to process request";
     const statusCode = error.statusCode || 500;
-    
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: statusCode }
-    );
+
+    return NextResponse.json({ error: errorMessage }, { status: statusCode });
   }
 }
