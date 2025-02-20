@@ -8,9 +8,9 @@ import {
 
 export async function getWebVitals() {
   const res = await Promise.all([
-    getLCPDistribution,
-    getMetricsSummary,
-    getWebVitalsSummary,
+    getLCPDistribution(),
+    getMetricsSummary(),
+    getWebVitalsSummary(),
   ]);
   return res;
 }
