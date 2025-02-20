@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from 'next/navigation';
 import {
   Box,
   TextField,
@@ -11,14 +10,16 @@ import {
   CardContent,
   Alert,
 } from "@mui/material";
+import EmailIcon from '@mui/icons-material/Email';
+import SpeedIcon from '@mui/icons-material/Speed';
+import BarChartIcon from '@mui/icons-material/BarChart';
 
 export default function DomainForm() {
-  const router = useRouter();
   const [domain, setDomain] = useState("");
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,17 +36,85 @@ export default function DomainForm() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to send analysis request");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send analysis request");
       }
 
-      // Redirect to submitted page using BASE_URL
-      window.location.href = `${baseUrl}/submitted-eval`;
+      setIsSubmitted(true);
       
     } catch (error) {
-      setError("Something went wrong. Please try again.");
+      setError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+    } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isSubmitted) {
+    return (
+      <Card sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
+        <CardContent sx={{ p: 4 }}>
+          <Typography variant="h4" align="center" gutterBottom sx={{ fontWeight: 500, mb: 3 }}>
+            Thank you for requesting your site evaluation!
+          </Typography>
+          <Typography variant="h6" color="text.secondary" align="center" sx={{ mb: 4 }}>
+            You're one step closer to unlocking your site's full potential.
+          </Typography>
+
+          <Typography variant="h5" gutterBottom sx={{ mb: 4, fontWeight: 500 }}>
+            What Happens Next?
+          </Typography>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+              <EmailIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+              <div>
+                <Typography variant="h6" gutterBottom>
+                  Initial Analysis Email (1 minute)
+                </Typography>
+                <Typography color="text.secondary">
+                  You'll receive an email shortly with your site's current performance metrics 
+                  and Core Web Vitals scores.
+                </Typography>
+              </div>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+              <SpeedIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+              <div>
+                <Typography variant="h6" gutterBottom>
+                  Detailed Performance Report
+                </Typography>
+                <Typography color="text.secondary">
+                  A comprehensive analysis of your site's speed, including loading times, 
+                  user experience metrics, and potential optimization opportunities.
+                </Typography>
+              </div>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+              <BarChartIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+              <div>
+                <Typography variant="h6" gutterBottom>
+                  Get Ready to Boost Conversions
+                </Typography>
+                <Typography color="text.secondary">
+                  After reviewing your analysis, you'll have access to actionable insights 
+                  to improve your site's performance and drive better business results.
+                </Typography>
+              </div>
+            </Box>
+          </Box>
+
+          <Box sx={{ textAlign: 'center', mt: 4 }}>
+            <Typography variant="body1" color="text.secondary">
+              Keep an eye on your inbox for your performance analysis.
+              If you don't see it within a few minutes, please check your spam folder.
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
