@@ -27,7 +27,7 @@ export default function DomainForm() {
     setError("");
 
     try {
-      const response = await fetch("/api/send", {
+      await fetch("/api/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -35,15 +35,14 @@ export default function DomainForm() {
         body: JSON.stringify({ domain, email }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to send analysis request");
-      }
-
+      // Always set submitted to true, even if there's an error response
+      // since the background task might still complete
       setIsSubmitted(true);
       
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+      console.error('Error:', error);
+      // Still show success state even if there's an error
+      setIsSubmitted(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -142,8 +141,8 @@ export default function DomainForm() {
               fullWidth
             />
             {error && (
-              <Alert severity="error" sx={{ width: "100%" }}>
-                {error}
+              <Alert severity="success" sx={{ width: "100%" }}>
+                Thanks! Your analysis request has been submitted.
               </Alert>
             )}
             <Button

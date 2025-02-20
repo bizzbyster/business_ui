@@ -1,11 +1,11 @@
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
-
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = new Resend(resendApiKey);
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+export const runtime = 'edge';
 
 export async function POST(req: Request) {
   if (!resendApiKey) {
@@ -33,8 +33,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Send first email
-    console.log('Sending first email...');
+    // Send first email immediately
     const firstEmailResult = await resend.emails.send({
       from: 'onboarding@snappi.ai',
       to: email,
@@ -57,14 +56,12 @@ export async function POST(req: Request) {
         </div>
       `
     });
-    console.log('First email sent:', firstEmailResult);
 
-    // Use Promise for second email with timeout
-    const secondEmailPromise = new Promise(async (resolve, reject) => {
+    // Schedule second email in background
+    Promise.resolve().then(async () => {
       try {
-        await new Promise(r => setTimeout(r, 60000)); // 60 second delay
-        console.log('Sending second email...');
-        const secondEmailResult = await resend.emails.send({
+        await new Promise(resolve => setTimeout(resolve, 60000));
+        await resend.emails.send({
           from: 'onboarding@snappi.ai',
           to: email,
           subject: `${domain} Performance Analysis - Speed Optimization Opportunities`,
@@ -137,17 +134,9 @@ export async function POST(req: Request) {
             </div>
           `
         });
-        console.log('Second email sent:', secondEmailResult);
-        resolve(secondEmailResult);
       } catch (error) {
         console.error('Error sending second email:', error);
-        reject(error);
       }
-    });
-
-    // Handle second email in background
-    secondEmailPromise.catch(error => {
-      console.error('Failed to send second email:', error);
     });
 
     return NextResponse.json({
