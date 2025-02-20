@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import EmailIcon from '@mui/icons-material/Email';
 import SpeedIcon from '@mui/icons-material/Speed';
-import BarChartIcon from '@mui/icons-material/BarChart';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 
 export default function DomainForm() {
   const [domain, setDomain] = useState("");
@@ -27,7 +27,7 @@ export default function DomainForm() {
     setError("");
 
     try {
-      await fetch("/api/send", {
+      const response = await fetch("/api/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -35,14 +35,16 @@ export default function DomainForm() {
         body: JSON.stringify({ domain, email }),
       });
 
-      // Always set submitted to true, even if there's an error response
-      // since the background task might still complete
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to process request");
+      }
+
       setIsSubmitted(true);
       
     } catch (error) {
       console.error('Error:', error);
-      // Still show success state even if there's an error
-      setIsSubmitted(true);
+      setError(error instanceof Error ? error.message : "Failed to process request");
     } finally {
       setIsSubmitting(false);
     }
@@ -56,7 +58,7 @@ export default function DomainForm() {
             Thank you for requesting your site evaluation!
           </Typography>
           <Typography variant="h6" color="text.secondary" align="center" sx={{ mb: 4 }}>
-            You're one step closer to unlocking your site's full potential.
+            Let's unlock your website's full performance potential.
           </Typography>
 
           <Typography variant="h5" gutterBottom sx={{ mb: 4, fontWeight: 500 }}>
@@ -68,11 +70,11 @@ export default function DomainForm() {
               <EmailIcon sx={{ color: 'primary.main', fontSize: 32 }} />
               <div>
                 <Typography variant="h6" gutterBottom>
-                  Initial Analysis Email (1 minute)
+                  Receive Your Performance Analysis (in up to 24 hrs)
                 </Typography>
                 <Typography color="text.secondary">
-                  You'll receive an email shortly with your site's current performance metrics 
-                  and Core Web Vitals scores.
+                  Check your inbox for a detailed analysis of your website's current performance metrics,
+                  including Core Web Vitals and potential optimizations.
                 </Typography>
               </div>
             </Box>
@@ -81,24 +83,24 @@ export default function DomainForm() {
               <SpeedIcon sx={{ color: 'primary.main', fontSize: 32 }} />
               <div>
                 <Typography variant="h6" gutterBottom>
-                  Detailed Performance Report
+                  Access Your Performance Dashboard
                 </Typography>
                 <Typography color="text.secondary">
-                  A comprehensive analysis of your site's speed, including loading times, 
-                  user experience metrics, and potential optimization opportunities.
+                  We'll provide a comprehensive dashboard showing synthetic test data 
+                  to demonstrate your site's optimization potential.
                 </Typography>
               </div>
             </Box>
 
             <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
-              <BarChartIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+              <RocketLaunchIcon sx={{ color: 'primary.main', fontSize: 32 }} />
               <div>
                 <Typography variant="h6" gutterBottom>
-                  Get Ready to Boost Conversions
+                  Start Your Beta Trial
                 </Typography>
                 <Typography color="text.secondary">
-                  After reviewing your analysis, you'll have access to actionable insights 
-                  to improve your site's performance and drive better business results.
+                  Begin your optimization journey and track real-world performance improvements
+                  as we enhance your website's speed and user experience.
                 </Typography>
               </div>
             </Box>
@@ -141,8 +143,8 @@ export default function DomainForm() {
               fullWidth
             />
             {error && (
-              <Alert severity="success" sx={{ width: "100%" }}>
-                Thanks! Your analysis request has been submitted.
+              <Alert severity="error" sx={{ width: "100%" }}>
+                {error}
               </Alert>
             )}
             <Button
