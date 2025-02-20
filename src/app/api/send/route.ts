@@ -1,17 +1,17 @@
-import { Resend } from 'resend';
-import { NextResponse } from 'next/server';
+import { Resend } from "resend";
+import { NextResponse } from "next/server";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = new Resend(resendApiKey);
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(req: Request) {
   if (!resendApiKey) {
-    console.error('RESEND_API_KEY is not configured');
+    console.error("RESEND_API_KEY is not configured");
     return NextResponse.json(
-      { error: 'Email service not configured' },
+      { error: "Email service not configured" },
       { status: 500 }
     );
   }
@@ -21,21 +21,21 @@ export async function POST(req: Request) {
 
     if (!domain || !email) {
       return NextResponse.json(
-        { error: 'Domain and email are required' },
+        { error: "Domain and email are required" },
         { status: 400 }
       );
     }
 
-    if (!email.includes('@')) {
+    if (!email.includes("@")) {
       return NextResponse.json(
-        { error: 'Invalid email format' },
+        { error: "Invalid email format" },
         { status: 400 }
       );
     }
 
     // Send first email
     await resend.emails.send({
-      from: 'onboarding@snappi.ai',
+      from: "onboarding@snappi.ai",
       to: email,
       subject: `Analyzing ${domain} - Initial Performance Check`,
       html: `
@@ -54,14 +54,14 @@ export async function POST(req: Request) {
           
           <p>Get ready to discover opportunities to significantly improve your site's speed and user experience.</p>
         </div>
-      `
+      `,
     });
 
     // Schedule second email
     setTimeout(async () => {
       try {
         await resend.emails.send({
-          from: 'onboarding@snappi.ai',
+          from: "onboarding@snappi.ai",
           to: email,
           subject: `${domain} Performance Analysis - Speed Optimization Opportunities`,
           html: `
@@ -131,22 +131,21 @@ export async function POST(req: Request) {
                 </a>
               </div>
             </div>
-          `
+          `,
         });
       } catch (error) {
-        console.error('Error sending second email:', error);
+        console.error("Error sending second email:", error);
       }
     }, 60000);
 
     return NextResponse.json({
       success: true,
-      message: 'Analysis initiated'
+      message: "Analysis initiated",
     });
-
   } catch (error: any) {
-    console.error('API route error:', error);
+    console.error("API route error:", error);
     return NextResponse.json(
-      { error: 'Failed to process request' },
+      { error: "Failed to process request" },
       { status: 500 }
     );
   }
