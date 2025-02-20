@@ -9,6 +9,7 @@ import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
+import { branding } from '@/config/branding';
 
 const generateLoadTimes = (minTime: number, maxTime: number, count: number) => {
   return Array.from({ length: count }, (_, i) => {
@@ -32,15 +33,15 @@ const quickStats = [
     title: 'Current LCP',
     value: '2200ms',
     change: '↓ Needs Improvement',
-    color: 'warning.main',
-    explanation: 'Your current Largest Contentful Paint (LCP) at 75th percentile is 2200ms. This means 75% of your page loads complete their main content render within this time. According to Google, an LCP under 2500ms is considered "good" for optimal user experience.'
+    color: branding.secondaryColor,
+    explanation: 'Your current Largest Contentful Paint (LCP) at 75th percentile is 2200ms. This means 75% of your page loads complete their main content render within this time. An LCP under 2500ms is considered "good" by Google, but every milisecond counts and can affect business metrics.'
   },
   {
     icon: SpeedIcon,
     title: 'Projected LCP',
     value: '1600ms',
     change: '↑ 27% Faster with Clippo',
-    color: 'success.main',
+    color: branding.primaryColor,
     explanation: 'Based on our synthetic tests and real-world data from similar implementations, Clippo can reduce your LCP to approximately 1600ms at the 75th percentile. This improvement is achieved through advanced caching, optimized resource loading, and efficient content delivery.'
   },
   {
@@ -48,7 +49,7 @@ const quickStats = [
     title: 'Conversion Impact',
     value: '+12%',
     change: '↑ Estimated Increase',
-    color: 'success.main',
+    color: branding.primaryColor,
     explanation: 'Research shows that faster load times directly correlate with improved conversion rates. Based on the projected 27% speed improvement, and considering industry benchmarks where a 100ms decrease in load time can improve conversion rates by 1%, we estimate a potential 12% increase in your conversion rate.'
   },
   {
@@ -56,7 +57,7 @@ const quickStats = [
     title: 'Revenue Boost',
     value: '$24.8k/mo',
     change: '↑ Potential Gain',
-    color: 'success.main',
+    color: branding.primaryColor,
     explanation: 'This estimate is calculated by applying the projected 12% conversion rate increase to your current monthly revenue. For example, if your current monthly revenue is $207k, a 12% improvement could result in an additional $24.8k per month.'
   }
 ];
@@ -138,9 +139,9 @@ export default function DashboardPage() {
           color="primary"
           onClick={handleStartBetaTrial}
           sx={{
-            backgroundColor: '#2e7d32',
+            backgroundColor: branding.primaryColor,
             '&:hover': {
-              backgroundColor: '#1b5e20',
+              backgroundColor: '#3570b3',
             },
             textTransform: 'none',
             fontWeight: 500
@@ -166,7 +167,7 @@ export default function DashboardPage() {
               <Box sx={{ height: 400, mt: 2 }}>
                 <ResponsiveContainer>
                   <ScatterChart
-                    margin={{ top: 20, right: 20, bottom: 40, left: 50 }}
+                    margin={{ top: 20, right: 20, bottom: 60, left: 60 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
@@ -180,7 +181,7 @@ export default function DashboardPage() {
                       <Label 
                         value="Load Time (milliseconds)" 
                         position="bottom" 
-                        offset={20}
+                        offset={30}
                       />
                     </XAxis>
                     <YAxis 
@@ -190,7 +191,15 @@ export default function DashboardPage() {
                       domain={[0, 100]}
                       tickFormatter={(value) => `${value}%`}
                       width={50}
-                    />
+                    >
+                      <Label
+                        value="Percentile Distribution"
+                        position="left"
+                        angle={-90}
+                        offset={40}
+                        style={{ textAnchor: 'middle' }}
+                      />
+                    </YAxis>
                     
                     <ReferenceLine 
                       y={75} 
@@ -206,18 +215,21 @@ export default function DashboardPage() {
                         return [value, name];
                       }}
                     />
-                    <Legend />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                    />
                     
                     <Scatter 
                       name="Without Clippo" 
                       data={baselineLCP}
-                      fill="#8884d8"
+                      fill={branding.secondaryColor}
                       fillOpacity={0.6}
                     />
                     <Scatter 
                       name="With Clippo" 
                       data={clippoLCP}
-                      fill="#82ca9d"
+                      fill={branding.primaryColor}
                       fillOpacity={0.6}
                     />
                   </ScatterChart>
@@ -242,14 +254,11 @@ export default function DashboardPage() {
                 <Box key={vital.metric} sx={{ my: 3 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography>{vital.metric}</Typography>
-                    <Typography>
-                      Clippo: {vital.target} {vital.unit}
-                    </Typography>
                   </Box>
                   {/* Container for both progress bars */}
                   <Box sx={{ mb: 1 }}>
                     {/* Without Clippo bar */}
-                    <Box sx={{ mb: 1 }}>
+                    <Box sx={{ mb: 2 }}>
                       <LinearProgress
                         variant="determinate"
                         value={(vital.baseline / 2400) * 100}
@@ -257,13 +266,18 @@ export default function DashboardPage() {
                           height: 8,
                           backgroundColor: '#eef0f2',
                           '& .MuiLinearProgress-bar': {
-                            backgroundColor: '#8884d8'
+                            backgroundColor: branding.secondaryColor
                           }
                         }}
                       />
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                        Without Clippo
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Without Clippo
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {vital.baseline} {vital.unit}
+                        </Typography>
+                      </Box>
                     </Box>
                     {/* With Clippo bar */}
                     <Box>
@@ -274,13 +288,18 @@ export default function DashboardPage() {
                           height: 8,
                           backgroundColor: '#eef0f2',
                           '& .MuiLinearProgress-bar': {
-                            backgroundColor: '#82ca9d'
+                            backgroundColor: branding.primaryColor
                           }
                         }}
                       />
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                        With Clippo
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          With Clippo
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {vital.optimized} {vital.unit}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
                 </Box>
