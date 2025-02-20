@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     const reportEmailResult = await resend.emails.send({
       from: 'onboarding@snappi.ai',
       to: email,
-      subject: `${domain} Performance Analysis - Speed Optimization Opportunities`,
+      subject: `${domain} Performance Analysis by Clippo`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #333; font-size: 24px;">Performance Analysis Report for ${domain}</h1>
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
 
           <div style="text-align: center; margin-top: 30px;">
             <a 
-              href="${BASE_URL}/onboarding" 
+              href="${BASE_URL}/sign-up" 
               style="
                 display: inline-block; 
                 padding: 12px 24px; 
