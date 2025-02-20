@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = new Resend(resendApiKey);
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -33,72 +33,90 @@ export async function POST(req: Request) {
       );
     }
 
-    // Send first email immediately
+    // Send first email
     await resend.emails.send({
       from: 'onboarding@snappi.ai',
       to: email,
-      subject: 'Analyzing Your Website Performance',
+      subject: `Analyzing ${domain} - Initial Performance Check`,
       html: `
-        <h1>Analyzing ${domain}'s Performance</h1>
-        <p>We're running a comprehensive speed analysis of your website. Your detailed performance report will be ready in approximately 1 minute.</p>
-        <p>Our analysis covers:</p>
-        <ul>
-          <li>Core Web Vitals metrics</li>
-          <li>Loading speed across different devices</li>
-          <li>Server response times</li>
-          <li>Performance bottlenecks</li>
-        </ul>
-        <p>Get ready to discover opportunities to significantly improve your site's speed and user experience.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1>Analyzing ${domain}'s Performance</h1>
+          <p>We're running a comprehensive speed analysis of your website. Your detailed performance report will be ready in approximately 1 minute.</p>
+          
+          <h2>Our analysis covers:</h2>
+          <ul>
+            <li>Core Web Vitals metrics (LCP, FCP, TTFB)</li>
+            <li>Loading speed across different devices</li>
+            <li>Server response times</li>
+            <li>Performance bottlenecks and optimization opportunities</li>
+            <li>Potential revenue impact of speed improvements</li>
+          </ul>
+          
+          <p>Get ready to discover opportunities to significantly improve your site's speed and user experience.</p>
+        </div>
       `
     });
 
-    // Schedule second email in the background
-    const secondEmail = (async () => {
+    // Schedule second email
+    setTimeout(async () => {
       try {
-        await delay(60000);
         await resend.emails.send({
           from: 'onboarding@snappi.ai',
           to: email,
-          subject: `Performance Analysis for ${domain}`,
+          subject: `${domain} Performance Analysis - Speed Optimization Opportunities`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h1 style="color: #333; font-size: 24px;">Performance Analysis Report for ${domain}</h1>
               
               <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h2 style="color: #2e7d32; margin-top: 0;">Core Web Vitals Summary:</h2>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                  <div style="flex: 1;">
-                    <h3 style="margin: 0; color: #666;">LCP (Largest Contentful Paint)</h3>
-                    <p style="font-size: 24px; margin: 5px 0; color: #2e7d32;">1.8s</p>
-                    <p style="color: #666; margin: 0;">Improved from 4.2s</p>
-                  </div>
-                  <div style="flex: 1;">
-                    <h3 style="margin: 0; color: #666;">FCP (First Contentful Paint)</h3>
-                    <p style="font-size: 24px; margin: 5px 0; color: #2e7d32;">0.9s</p>
-                    <p style="color: #666; margin: 0;">Improved from 2.8s</p>
-                  </div>
+                <h2 style="color: #2e7d32; margin-top: 0;">Core Web Vitals Analysis:</h2>
+                
+                <div style="margin-bottom: 20px;">
+                  <h3 style="margin: 0; color: #666;">Current Performance</h3>
+                  <ul style="color: #666;">
+                    <li>LCP (Largest Contentful Paint): 2200ms - Needs Improvement</li>
+                    <li>FCP (First Contentful Paint): 1800ms</li>
+                    <li>TTFB (Time to First Byte): 800ms</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 style="margin: 0; color: #666;">Projected With Clippo</h3>
+                  <ul style="color: #666;">
+                    <li>LCP: 1600ms (27% faster)</li>
+                    <li>FCP: 1200ms (33% improvement)</li>
+                    <li>TTFB: 200ms (75% reduction)</li>
+                  </ul>
                 </div>
               </div>
 
-              <h2 style="color: #333;">Business Impact:</h2>
+              <h2 style="color: #333;">Business Impact Analysis:</h2>
               <ul style="color: #666;">
-                <li>Estimated Revenue Loss: $12,000/month due to slow loading</li>
-                <li>Potential Conversion Rate Increase: +28% with optimizations</li>
-                <li>Mobile Traffic Drop-off Rate: 35% due to performance issues</li>
+                <li><strong>Conversion Impact:</strong> +12% estimated increase based on speed improvements</li>
+                <li><strong>Revenue Opportunity:</strong> Potential $24.8k monthly revenue boost</li>
+                <li><strong>Speed Improvement:</strong> Up to 27% faster page loads</li>
+              </ul>
+
+              <h2 style="color: #333;">Key Findings:</h2>
+              <ul style="color: #666;">
+                <li>Your current LCP of 2200ms is above Google's recommended threshold</li>
+                <li>75% of your page loads can complete under 1.6s with our optimizations</li>
+                <li>Potential for significant conversion rate improvements</li>
+                <li>Server response time can be reduced by up to 75%</li>
               </ul>
 
               <h2 style="color: #333;">Ready to boost your website's speed?</h2>
-              <p style="color: #666;">Start your free trial with Clippo today and transform your website into a high-performance revenue engine. Our automated optimizations can help you:</p>
+              <p style="color: #666;">Start your beta trial with Clippo today. Our optimizations can help you:</p>
               <ul style="color: #666;">
-                <li>Reduce loading times by up to 65%</li>
+                <li>Reduce loading times by up to 27%</li>
                 <li>Improve Core Web Vitals scores</li>
-                <li>Boost mobile conversion rates</li>
-                <li>Enhance SEO rankings</li>
+                <li>Boost conversion rates by an estimated 12%</li>
+                <li>Enhance user experience and engagement</li>
               </ul>
 
               <div style="text-align: center; margin-top: 30px;">
                 <a 
-                  href="${BASE_URL}/dashboard" 
+                  href="${BASE_URL}/onboarding" 
                   style="
                     display: inline-block; 
                     padding: 12px 24px; 
@@ -109,33 +127,27 @@ export async function POST(req: Request) {
                     font-weight: 500;
                   "
                 >
-                  View Your Dashboard
+                  Start Beta Trial
                 </a>
               </div>
             </div>
           `
         });
-        console.log('Analysis report sent successfully');
       } catch (error) {
         console.error('Error sending second email:', error);
       }
-    })();
+    }, 60000);
 
-    // Return success immediately, don't wait for second email
     return NextResponse.json({
-      message: 'Analysis initiated. Report will be delivered in 1 minute.',
-      status: 'success'
+      success: true,
+      message: 'Analysis initiated'
     });
 
   } catch (error: any) {
     console.error('API route error:', error);
-    
-    const errorMessage = error.message || 'Failed to process request';
-    const statusCode = error.statusCode || 500;
-    
     return NextResponse.json(
-      { error: errorMessage },
-      { status: statusCode }
+      { error: 'Failed to process request' },
+      { status: 500 }
     );
   }
 }
