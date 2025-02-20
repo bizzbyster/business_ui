@@ -109,7 +109,7 @@ export default function DomainForm() {
           <Box sx={{ textAlign: 'center', mt: 4 }}>
             <Typography variant="body1" color="text.secondary">
               Keep an eye on your inbox for your performance analysis.
-              If you don't see it within a few minutes, please check your spam folder.
+              If you don't see it within 24 hours, please check your spam folder.
             </Typography>
           </Box>
         </CardContent>

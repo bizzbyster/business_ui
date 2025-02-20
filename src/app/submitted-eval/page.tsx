@@ -72,7 +72,7 @@ export default function SubmittedEvalPage() {
         <Box sx={{ textAlign: 'center', mb: 8 }}>
           <Typography variant="body1" color="text.secondary">
             Keep an eye on your inbox for your performance analysis.
-            If you don't see it within a few minutes, please check your spam folder.
+            If you don't see it within 24 hours, please check your spam folder.
           </Typography>
         </Box>
       </Container>
