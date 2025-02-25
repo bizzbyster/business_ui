@@ -122,17 +122,22 @@ function StatsCard({ icon: Icon, title, value, change, color, explanation }: Sta
 export default function DashboardPage() {
   const { user } = useUser();
   const router = useRouter();
-
+  
   const handleStartBetaTrial = () => {
     const currentDomain = window.location.hostname;
     router.push(`/onboarding?domain=${currentDomain}`);
   };
 
+  // Get domain from metadata, or fall back to other identifiers
+  const displayDomain = user?.unsafeMetadata?.domain || 
+                       window.location.hostname || 
+                       "Your";
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 500 }}>
-          {user?.username || user?.firstName || "User"}&apos;s Performance Dashboard
+          {`${displayDomain}'s Performance Dashboard`}
         </Typography>
         <Button
           variant="contained"
