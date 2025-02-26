@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Container, Typography, Box, Card, CardContent, Grid, LinearProgress, Button, Accordion, AccordionSummary, AccordionDetails, Tabs, Tab, Divider, Alert, TextField, Paper } from '@mui/material';
 import { BarChart, Bar, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer, Label, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -106,6 +106,11 @@ const deviceDistribution = [
 
 const deviceColors = ['#8884d8', '#82ca9d', '#ffc658'];
 
+// Constants for real-world metrics
+const DAILY_VISITORS = 5850;
+const IMPROVED_CONVERSION_RATE = 4.44;
+const CONVERSION_INCREASE_PERCENT = 32;
+
 interface StatsCardProps {
   icon: React.ElementType;
   title: string;
@@ -146,17 +151,24 @@ export default function DashboardPage() {
   const [tabValue, setTabValue] = useState(0);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   
-  // Revenue calculator states
-  const [monthlyVisitors, setMonthlyVisitors] = useState('150000');
-  const [conversionRate, setConversionRate] = useState('2.5');
-  const [averageOrderValue, setAverageOrderValue] = useState('85');
-  const [revenueBoost, setRevenueBoost] = useState('38250');
+  // Revenue calculator states for synthetic data
+  const [syntheticMonthlyVisitors, setSyntheticMonthlyVisitors] = useState('');
+  const [syntheticConversionRate, setSyntheticConversionRate] = useState('');
+  const [syntheticAverageOrderValue, setSyntheticAverageOrderValue] = useState('');
+  const [syntheticRevenueBoost, setSyntheticRevenueBoost] = useState('0');
+  const [showSyntheticCalculations, setShowSyntheticCalculations] = useState(false);
   
-  // Calculate revenue boost
-  const calculateRevenueBoost = () => {
-    const visitors = parseFloat(monthlyVisitors);
-    const conversion = parseFloat(conversionRate);
-    const orderValue = parseFloat(averageOrderValue);
+  // Revenue calculator states for real-world data
+  const [realMonthlyVisitors, setRealMonthlyVisitors] = useState((DAILY_VISITORS * 30).toString());
+  const [realConversionRate, setRealConversionRate] = useState(IMPROVED_CONVERSION_RATE.toString());
+  const [realAverageOrderValue, setRealAverageOrderValue] = useState('85');
+  const [realRevenueBoost, setRealRevenueBoost] = useState('0');
+  
+  // Calculate revenue boost for synthetic data
+  const calculateSyntheticRevenueBoost = useCallback(() => {
+    const visitors = parseFloat(syntheticMonthlyVisitors);
+    const conversion = parseFloat(syntheticConversionRate);
+    const orderValue = parseFloat(syntheticAverageOrderValue);
     
     if (!isNaN(visitors) && !isNaN(conversion) && !isNaN(orderValue)) {
       // Current monthly revenue
@@ -168,9 +180,32 @@ export default function DashboardPage() {
       
       // Calculate boost
       const boost = improvedRevenue - currentRevenue;
-      setRevenueBoost(boost.toFixed(0));
+      setSyntheticRevenueBoost(boost.toFixed(0));
+      setShowSyntheticCalculations(true);
     }
-  };
+  }, [syntheticMonthlyVisitors, syntheticConversionRate, syntheticAverageOrderValue]);
+  
+  // Calculate revenue boost for real-world data
+  const calculateRealRevenueBoost = useCallback(() => {
+    const visitors = parseFloat(realMonthlyVisitors);
+    const currentConversion = parseFloat(realConversionRate);
+    const orderValue = parseFloat(realAverageOrderValue);
+    
+    if (!isNaN(visitors) && !isNaN(currentConversion) && !isNaN(orderValue)) {
+      // Calculate original conversion rate (before Clippo)
+      // If current rate is 4.44% and it increased by 32%, then original was:
+      // Original = Current / (1 + Increase%)
+      const originalConversionRate = currentConversion / (1 + (CONVERSION_INCREASE_PERCENT / 100));
+      
+      // Calculate monthly revenue with original and improved conversion rates
+      const originalRevenue = visitors * (originalConversionRate / 100) * orderValue;
+      const improvedRevenue = visitors * (currentConversion / 100) * orderValue;
+      
+      // Calculate boost
+      const boost = improvedRevenue - originalRevenue;
+      setRealRevenueBoost(boost.toFixed(0));
+    }
+  }, [realMonthlyVisitors, realConversionRate, realAverageOrderValue]);
   
   // Determine dashboard title based on available data
   useEffect(() => {
@@ -198,28 +233,12 @@ export default function DashboardPage() {
     }
   }, [user, isLoaded]);
 
-  // Calculate revenue boost on initial load
-  useEffect(() => {
-    calculateRevenueBoost();
-  }, [tabValue]);
-  
-  // Pre-populate the real-world calculator with data from charts
+  // Calculate real-world revenue boost on tab change
   useEffect(() => {
     if (tabValue === 1 && hasCompletedOnboarding) {
-      // Extract values from the real-world data
-      const lastDay = realWorldVisitData[realWorldVisitData.length - 1];
-      const totalVisits = realWorldVisitData.reduce((sum, day) => sum + day.visits, 0);
-      const totalConversions = realWorldVisitData.reduce((sum, day) => sum + day.conversions, 0);
-      
-      // Calculate monthly extrapolation (assuming data is 14 days)
-      const monthlyVisitorEstimate = Math.round((totalVisits / 14) * 30);
-      const currentConversionRate = (totalConversions / totalVisits) * 100;
-      
-      // Update calculator values
-      setMonthlyVisitors(monthlyVisitorEstimate.toString());
-      setConversionRate(currentConversionRate.toFixed(2));
+      calculateRealRevenueBoost();
     }
-  }, [tabValue, hasCompletedOnboarding]);
+  }, [tabValue, hasCompletedOnboarding, calculateRealRevenueBoost]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -441,106 +460,155 @@ export default function DashboardPage() {
               </Card>
             </Grid>
             
-            {/* Revenue Boost Calculator for Synthetic Data */}
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <CalculateIcon sx={{ mr: 1, color: branding.primaryColor }} />
-                    <Typography variant="h6">
-                      Revenue Boost Calculator
-                    </Typography>
-                  </Box>
-                  
-                  <Grid container spacing={3} alignItems="center">
-                    <Grid item xs={12} md={7}>
-                      <Box sx={{ mb: 3 }}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          Fine-tune your revenue boost calculation with your site metrics:
-                        </Typography>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              label="Monthly Visitors"
-                              value={monthlyVisitors}
-                              onChange={(e) => setMonthlyVisitors(e.target.value)}
-                              type="number"
-                              fullWidth
-                              variant="outlined"
-                              size="small"
-                              margin="normal"
-                            />
+            {/* Revenue Boost Calculator for Synthetic Data - Only show if NOT completed onboarding */}
+            {!hasCompletedOnboarding && (
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <CalculateIcon sx={{ mr: 1, color: branding.primaryColor }} />
+                      <Typography variant="h6">
+                        Revenue Boost Calculator
+                      </Typography>
+                    </Box>
+                    
+                    <Grid container spacing={3} alignItems="center">
+                      <Grid item xs={12} md={7}>
+                        <Box sx={{ mb: 3 }}>
+                          <Typography variant="body2" color="text.secondary" gutterBottom>
+                            Enter your site metrics to estimate your potential revenue boost with Clippo:
+                          </Typography>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                label="Current Monthly Visitors"
+                                value={syntheticMonthlyVisitors}
+                                onChange={(e) => setSyntheticMonthlyVisitors(e.target.value)}
+                                type="number"
+                                fullWidth
+                                variant="outlined"
+                                size="small"
+                                margin="normal"
+                                placeholder="e.g., 150000"
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                label="Current Conversion Rate (%)"
+                                value={syntheticConversionRate}
+                                onChange={(e) => setSyntheticConversionRate(e.target.value)}
+                                type="number"
+                                fullWidth
+                                variant="outlined"
+                                size="small"
+                                margin="normal"
+                                placeholder="e.g., 2.5"
+                                InputProps={{
+                                  endAdornment: <Box component="span" sx={{ ml: 1 }}>%</Box>,
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12}>
+                              <TextField
+                                label="Average Order Value ($)"
+                                value={syntheticAverageOrderValue}
+                                onChange={(e) => setSyntheticAverageOrderValue(e.target.value)}
+                                type="number"
+                                fullWidth
+                                variant="outlined"
+                                size="small"
+                                margin="normal"
+                                placeholder="e.g., 85"
+                                InputProps={{
+                                  startAdornment: <Box component="span" sx={{ mr: 1 }}>$</Box>,
+                                }}
+                              />
+                            </Grid>
                           </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              label="Conversion Rate (%)"
-                              value={conversionRate}
-                              onChange={(e) => setConversionRate(e.target.value)}
-                              type="number"
-                              fullWidth
-                              variant="outlined"
-                              size="small"
-                              margin="normal"
-                              InputProps={{
-                                endAdornment: <Box component="span" sx={{ ml: 1 }}>%</Box>,
-                              }}
-                            />
-                          </Grid>
-                          <Grid item xs={12}>
-                            <TextField
-                              label="Average Order Value ($)"
-                              value={averageOrderValue}
-                              onChange={(e) => setAverageOrderValue(e.target.value)}
-                              type="number"
-                              fullWidth
-                              variant="outlined"
-                              size="small"
-                              margin="normal"
-                              InputProps={{
-                                startAdornment: <Box component="span" sx={{ mr: 1 }}>$</Box>,
-                              }}
-                            />
-                          </Grid>
+                        </Box>
+                        <Button 
+                          variant="contained" 
+                          onClick={calculateSyntheticRevenueBoost}
+                          sx={{ 
+                            backgroundColor: branding.primaryColor,
+                            '&:hover': {
+                              backgroundColor: '#3570b3',
+                            }
+                          }}
+                        >
+                          CALCULATE
+                        </Button>
+                      </Grid>
+                      <Grid item xs={12} md={5}>
+                        <Paper 
+                          elevation={0}
+                          sx={{ 
+                            p: 3, 
+                            backgroundColor: '#f8f9fa', 
+                            borderRadius: 2,
+                            border: '1px solid #e0e0e0'
+                          }}
+                        >
+                          <Typography variant="h6" gutterBottom color="primary">
+                            Potential Monthly Revenue Boost
+                          </Typography>
+                          <Typography variant="h3" sx={{ mb: 1, color: '#2e7d32' }}>
+                            ${parseInt(syntheticRevenueBoost).toLocaleString() || '0'}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Based on a 12% conversion rate improvement with Clippo.
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      {showSyntheticCalculations && (
+                        <Grid item xs={12}>
+                          <Accordion>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                              <Typography variant="subtitle1">
+                                How is this calculated?
+                              </Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                The revenue boost is calculated based on our research that shows a 12% increase in conversion rate from speed improvements:
+                              </Typography>
+                              <Box sx={{ mt: 1, ml: 2 }}>
+                                <Typography variant="body2" gutterBottom>
+                                  1. Current Monthly Revenue: 
+                                  <Box component="span" sx={{ fontWeight: 'bold', mx: 1 }}>
+                                    {parseInt(syntheticMonthlyVisitors).toLocaleString()} visits × {syntheticConversionRate}% conversion × ${syntheticAverageOrderValue} = 
+                                    ${((parseFloat(syntheticMonthlyVisitors) * parseFloat(syntheticConversionRate) / 100 * parseFloat(syntheticAverageOrderValue))).toLocaleString()}
+                                  </Box>
+                                </Typography>
+                                <Typography variant="body2" gutterBottom>
+                                  2. Expected Conversion Rate with Clippo: 
+                                  <Box component="span" sx={{ fontWeight: 'bold', mx: 1 }}>
+                                    {syntheticConversionRate}% × 1.12 = {(parseFloat(syntheticConversionRate) * 1.12).toFixed(2)}%
+                                  </Box>
+                                </Typography>
+                                <Typography variant="body2" gutterBottom>
+                                  3. Expected Monthly Revenue with Clippo: 
+                                  <Box component="span" sx={{ fontWeight: 'bold', mx: 1 }}>
+                                    {parseInt(syntheticMonthlyVisitors).toLocaleString()} visits × {(parseFloat(syntheticConversionRate) * 1.12).toFixed(2)}% conversion × ${syntheticAverageOrderValue} = 
+                                    ${((parseFloat(syntheticMonthlyVisitors) * parseFloat(syntheticConversionRate) * 1.12 / 100 * parseFloat(syntheticAverageOrderValue))).toLocaleString()}
+                                  </Box>
+                                </Typography>
+                                <Typography variant="body2" gutterBottom sx={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                                  4. Monthly Revenue Boost: 
+                                  <Box component="span" sx={{ mx: 1 }}>
+                                    ${parseInt(syntheticRevenueBoost).toLocaleString()}
+                                  </Box>
+                                </Typography>
+                              </Box>
+                            </AccordionDetails>
+                          </Accordion>
                         </Grid>
-                      </Box>
-                      <Button 
-                        variant="contained" 
-                        onClick={calculateRevenueBoost}
-                        sx={{ 
-                          backgroundColor: branding.primaryColor,
-                          '&:hover': {
-                            backgroundColor: '#3570b3',
-                          }
-                        }}
-                      >
-                        CALCULATE
-                      </Button>
+                      )}
                     </Grid>
-                    <Grid item xs={12} md={5}>
-                      <Paper 
-                        elevation={0}
-                        sx={{ 
-                          p: 3, 
-                          backgroundColor: '#f8f9fa', 
-                          borderRadius: 2,
-                          border: '1px solid #e0e0e0'
-                        }}
-                      >
-                        <Typography variant="h6" gutterBottom color="primary">
-                          Potential Monthly Revenue Boost
-                        </Typography>
-                        <Typography variant="h3" sx={{ mb: 1, color: '#2e7d32' }}>
-                          ${parseInt(revenueBoost).toLocaleString()}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Based on a 12% conversion rate improvement with Clippo.
-                        </Typography>
-                      </Paper>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
           </Grid>
         </>
       )}
@@ -631,7 +699,7 @@ export default function DashboardPage() {
                   </Typography>
                   <Box sx={{ height: 300, mt: 2 }}>
                     <ResponsiveContainer>
-                      <PieChart>
+                    <PieChart>
                         <Pie
                           data={deviceDistribution}
                           cx="50%"
@@ -712,8 +780,8 @@ export default function DashboardPage() {
                           <Grid item xs={12} md={6}>
                             <TextField
                               label="Monthly Visitors"
-                              value={monthlyVisitors}
-                              onChange={(e) => setMonthlyVisitors(e.target.value)}
+                              value={realMonthlyVisitors}
+                              onChange={(e) => setRealMonthlyVisitors(e.target.value)}
                               type="number"
                               fullWidth
                               variant="outlined"
@@ -723,9 +791,9 @@ export default function DashboardPage() {
                           </Grid>
                           <Grid item xs={12} md={6}>
                             <TextField
-                              label="Conversion Rate (%)"
-                              value={conversionRate}
-                              onChange={(e) => setConversionRate(e.target.value)}
+                              label="Clippo Conversion Rate (%)"
+                              value={realConversionRate}
+                              onChange={(e) => setRealConversionRate(e.target.value)}
                               type="number"
                               fullWidth
                               variant="outlined"
@@ -739,8 +807,8 @@ export default function DashboardPage() {
                           <Grid item xs={12}>
                             <TextField
                               label="Average Order Value ($)"
-                              value={averageOrderValue}
-                              onChange={(e) => setAverageOrderValue(e.target.value)}
+                              value={realAverageOrderValue}
+                              onChange={(e) => setRealAverageOrderValue(e.target.value)}
                               type="number"
                               fullWidth
                               variant="outlined"
@@ -755,7 +823,7 @@ export default function DashboardPage() {
                       </Box>
                       <Button 
                         variant="contained" 
-                        onClick={calculateRevenueBoost}
+                        onClick={calculateRealRevenueBoost}
                         sx={{ 
                           backgroundColor: branding.primaryColor,
                           '&:hover': {
@@ -767,48 +835,90 @@ export default function DashboardPage() {
                       </Button>
                     </Grid>
                     <Grid item xs={12} md={5}>
-                      <Paper
-                                              elevation={0}
-                                              sx={{ 
-                                                p: 3, 
-                                                backgroundColor: '#f8f9fa', 
-                                                borderRadius: 2,
-                                                border: '1px solid #e0e0e0'
-                                              }}
-                                            >
-                                              <Typography variant="h6" gutterBottom color="primary">
-                                                Potential Monthly Revenue Boost
-                                              </Typography>
-                                              <Typography variant="h3" sx={{ mb: 1, color: '#2e7d32' }}>
-                                                ${parseInt(revenueBoost).toLocaleString()}
-                                              </Typography>
-                                              <Typography variant="body2" color="text.secondary">
-                                                Based on a 12% conversion rate improvement with Clippo.
-                                              </Typography>
-                                            </Paper>
-                                          </Grid>
-                                        </Grid>
-                                      </CardContent>
-                                    </Card>
-                                  </Grid>
-                                </Grid>
-                              </>
-                            )}
-                      
-                            {tabValue === 1 && !hasCompletedOnboarding && (
-                              <Box sx={{ mt: 3 }}>
-                                <Alert 
-                                  severity="info"
-                                  action={
-                                    <Button color="inherit" size="small" onClick={handleStartBetaTrial}>
-                                      Start Now
-                                    </Button>
-                                  }
-                                >
-                                  Real-world data will be available after you complete the beta onboarding process.
-                                </Alert>
+                      <Paper 
+                        elevation={0}
+                        sx={{ 
+                          p: 3, 
+                          backgroundColor: '#f8f9fa', 
+                          borderRadius: 2,
+                          border: '1px solid #e0e0e0'
+                        }}
+                      >
+                        <Typography variant="h6" gutterBottom color="primary">
+                          Potential Monthly Revenue Boost
+                        </Typography>
+                        <Typography variant="h3" sx={{ mb: 1, color: '#2e7d32' }}>
+                          ${parseInt(realRevenueBoost).toLocaleString()}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Based on your actual conversion increase from implementing Clippo.
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Accordion>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography variant="subtitle1">
+                            How is this calculated?
+                          </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <Typography variant="body2" color="text.secondary" gutterBottom>
+                            The revenue boost is calculated by comparing your current performance with what it would have been without Clippo:
+                          </Typography>
+                          <Box sx={{ mt: 1, ml: 2 }}>
+                            <Typography variant="body2" gutterBottom>
+                              1. Original Conversion Rate (Before Clippo): 
+                              <Box component="span" sx={{ fontWeight: 'bold', mx: 1 }}>
+                                {realConversionRate}% ÷ 1.32 = {(parseFloat(realConversionRate) / 1.32).toFixed(2)}%
                               </Box>
-                            )}
-                          </Container>
-                        );
-                      }
+                            </Typography>
+                            <Typography variant="body2" gutterBottom>
+                              2. Monthly Revenue Without Clippo: 
+                              <Box component="span" sx={{ fontWeight: 'bold', mx: 1 }}>
+                                {parseInt(realMonthlyVisitors).toLocaleString()} visits × {(parseFloat(realConversionRate) / 1.32).toFixed(2)}% conversion × ${realAverageOrderValue} = 
+                                ${((parseFloat(realMonthlyVisitors) * (parseFloat(realConversionRate) / 1.32) / 100 * parseFloat(realAverageOrderValue))).toLocaleString()}
+                              </Box>
+                            </Typography>
+                            <Typography variant="body2" gutterBottom>
+                              3. Current Monthly Revenue with Clippo: 
+                              <Box component="span" sx={{ fontWeight: 'bold', mx: 1 }}>
+                                {parseInt(realMonthlyVisitors).toLocaleString()} visits × {realConversionRate}% conversion × ${realAverageOrderValue} = 
+                                ${((parseFloat(realMonthlyVisitors) * parseFloat(realConversionRate) / 100 * parseFloat(realAverageOrderValue))).toLocaleString()}
+                              </Box>
+                            </Typography>
+                            <Typography variant="body2" gutterBottom sx={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                              4. Monthly Revenue Boost: 
+                              <Box component="span" sx={{ mx: 1 }}>
+                                ${parseInt(realRevenueBoost).toLocaleString()}
+                              </Box>
+                            </Typography>
+                          </Box>
+                        </AccordionDetails>
+                      </Accordion>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </>
+      )}
+
+      {tabValue === 1 && !hasCompletedOnboarding && (
+        <Box sx={{ mt: 3 }}>
+          <Alert 
+            severity="info"
+            action={
+              <Button color="inherit" size="small" onClick={handleStartBetaTrial}>
+                Start Now
+              </Button>
+            }
+          >
+            Real-world data will be available after you complete the beta onboarding process.
+          </Alert>
+        </Box>
+      )}
+    </Container>
+  );
+}
