@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, TextField, Button, Typography } from "@mui/material";
+import { useUser } from "@clerk/nextjs";
 
 export default function CompanyDetailsForm({
   onSubmit,
@@ -9,7 +10,9 @@ export default function CompanyDetailsForm({
   onSubmit: (data: any) => void;
   onBack: () => void;
 }) {
-  const handleSubmit = (event: React.FormEvent) => {
+  const { user } = useUser();
+  
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     const data = {
@@ -18,7 +21,27 @@ export default function CompanyDetailsForm({
       jobTitle: formData.get("jobTitle"),
       domain: formData.get("domain"),
     };
-    onSubmit(data);
+    
+    try {
+      // Use unsafeMetadata for frontend updates
+      if (user) {
+        await user.update({
+          unsafeMetadata: {
+            ...user.unsafeMetadata, // Merge with existing data
+            fullName: data.fullName,
+            companyName: data.companyName,
+            jobTitle: data.jobTitle,
+            domain: data.domain,
+            onboardingStep: 1
+          }
+        });
+      }
+      
+      // Call original handler
+      onSubmit(data);
+    } catch (error) {
+      console.error("Error updating user metadata:", error);
+    }
   };
 
   return (
@@ -44,6 +67,7 @@ export default function CompanyDetailsForm({
         required
         fullWidth
         margin="normal"
+        defaultValue={user?.unsafeMetadata?.fullName || ""}
       />
 
       <TextField
@@ -52,6 +76,7 @@ export default function CompanyDetailsForm({
         required
         fullWidth
         margin="normal"
+        defaultValue={user?.unsafeMetadata?.companyName || ""}
       />
 
       <TextField
@@ -60,6 +85,7 @@ export default function CompanyDetailsForm({
         required
         fullWidth
         margin="normal"
+        defaultValue={user?.unsafeMetadata?.jobTitle || ""}
       />
 
       <TextField
@@ -69,6 +95,7 @@ export default function CompanyDetailsForm({
         fullWidth
         margin="normal"
         placeholder="example.com"
+        defaultValue={user?.unsafeMetadata?.domain || ""}
       />
 
       <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
