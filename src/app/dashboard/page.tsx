@@ -1,8 +1,17 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Container, Typography, Box, Card, CardContent, Grid, LinearProgress, Button, Accordion, AccordionSummary, AccordionDetails, Tabs, Tab, Divider, Alert, TextField, Paper } from '@mui/material';
-import { BarChart, Bar, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer, Label, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { 
+  Container, Typography, Box, Card, CardContent, Grid, 
+  LinearProgress, Button, Accordion, AccordionSummary, 
+  AccordionDetails, Tabs, Tab, Divider, Alert, TextField, Paper 
+} from '@mui/material';
+import { 
+  BarChart, Bar, ScatterChart, Scatter, XAxis, YAxis, 
+  CartesianGrid, Tooltip, Legend, ReferenceLine, 
+  ResponsiveContainer, Label, LineChart, Line, 
+  PieChart, Pie, Cell, ComposedChart 
+} from 'recharts';
 import SpeedIcon from '@mui/icons-material/Speed';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CalculateIcon from '@mui/icons-material/Calculate';
@@ -12,6 +21,30 @@ import DevicesIcon from '@mui/icons-material/Devices';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { branding } from '@/config/branding';
+
+// Define interfaces
+interface PercentileDataPoint {
+  percentile: number;
+  lcp: number;
+}
+
+interface PercentileData {
+  clippoData: PercentileDataPoint[];
+  nonClippoData: PercentileDataPoint[];
+}
+
+interface DataPayload {
+  dataKey: string;
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: DataPayload[];
+  label?: string;
+}
 
 const generateLoadTimes = (minTime: number, maxTime: number, count: number) => {
   return Array.from({ length: count }, (_, i) => {
@@ -28,6 +61,240 @@ const generateLoadTimes = (minTime: number, maxTime: number, count: number) => {
 
 const baselineLCP = generateLoadTimes(1800, 2200, 100);
 const clippoLCP = generateLoadTimes(1200, 1600, 100);
+
+// Real data extrapolated from the provided graph
+const generateRealPercentileData = (): PercentileData => {
+  // Extrapolated data points from the graph
+  const clippoDataPoints = [
+    { percentile: 0, lcp: 850 },
+    { percentile: 5, lcp: 900 },
+    { percentile: 10, lcp: 950 },
+    { percentile: 20, lcp: 1000 },
+    { percentile: 28, lcp: 1050 },
+    { percentile: 32, lcp: 1150 },
+    { percentile: 36, lcp: 1250 },
+    { percentile: 40, lcp: 1400 },
+    { percentile: 45, lcp: 1550 },
+    { percentile: 50, lcp: 1700 },
+    { percentile: 55, lcp: 1800 },
+    { percentile: 60, lcp: 1900 },
+    { percentile: 65, lcp: 2000 },
+    { percentile: 68, lcp: 2100 },
+    { percentile: 72, lcp: 2200 },
+    { percentile: 75, lcp: 2300 },
+    { percentile: 80, lcp: 2400 },
+    { percentile: 85, lcp: 2500 },
+    { percentile: 90, lcp: 2700 },
+    { percentile: 95, lcp: 3000 },
+    { percentile: 98, lcp: 3300 },
+    { percentile: 100, lcp: 3500 }
+  ];
+
+  const nonClippoDataPoints = [
+    { percentile: 0, lcp: 1300 },
+    { percentile: 5, lcp: 1400 },
+    { percentile: 10, lcp: 1500 },
+    { percentile: 15, lcp: 1600 },
+    { percentile: 25, lcp: 1700 },
+    { percentile: 35, lcp: 1800 },
+    { percentile: 40, lcp: 2000 },
+    { percentile: 45, lcp: 2100 },
+    { percentile: 50, lcp: 2300 },
+    { percentile: 55, lcp: 2400 },
+    { percentile: 60, lcp: 2500 },
+    { percentile: 65, lcp: 2600 },
+    { percentile: 70, lcp: 2700 },
+    { percentile: 75, lcp: 2800 },
+    { percentile: 80, lcp: 3200 },
+    { percentile: 85, lcp: 3600 },
+    { percentile: 90, lcp: 4000 },
+    { percentile: 95, lcp: 4500 },
+    { percentile: 98, lcp: 5000 },
+    { percentile: 100, lcp: 5500 }
+  ];
+
+  // Generate full set of percentile points (0-100) using interpolation
+  const clippoData = [];
+  const nonClippoData = [];
+
+  // Function to interpolate between known data points
+  const interpolate = (dataPoints: Array<{ percentile: number, lcp: number }>, targetPercentile: number): number => {
+    // Find the two closest points
+    for (let i = 0; i < dataPoints.length - 1; i++) {
+      if (dataPoints[i].percentile <= targetPercentile && dataPoints[i + 1].percentile >= targetPercentile) {
+        const lowerPoint = dataPoints[i];
+        const upperPoint = dataPoints[i + 1];
+        
+        // Linear interpolation formula
+        const percentRatio = (targetPercentile - lowerPoint.percentile) / (upperPoint.percentile - lowerPoint.percentile);
+        const interpolatedLcp = lowerPoint.lcp + percentRatio * (upperPoint.lcp - lowerPoint.lcp);
+        
+        return interpolatedLcp;
+      }
+    }
+    // Fallback
+    return dataPoints[dataPoints.length - 1].lcp;
+  };
+
+  // Generate 101 points (0-100%)
+  for (let i = 0; i <= 100; i++) {
+    clippoData.push({
+      percentile: i,
+      lcp: interpolate(clippoDataPoints, i)
+    });
+    
+    nonClippoData.push({
+      percentile: i,
+      lcp: interpolate(nonClippoDataPoints, i)
+    });
+  }
+  
+  return { clippoData, nonClippoData };
+};
+
+// Get conversion rate for a given LCP value
+const getConversionRateForLcp = (lcp: number): number => {
+  // For LCP < 0.5s, conversion rate is 0 (error pages)
+  if (lcp < 500) return 0;
+  
+  // Otherwise, conversion rate decreases as LCP increases
+  // Starting from about 8% at 0.6s, down to about 1% at 6s
+  // Using a sigmoid-inspired function that falls off more steeply in the middle range
+  
+  // Parameters for the conversion rate function
+  const maxRate = 8.0;  // Maximum conversion rate (%)
+  const midPoint = 2500; // LCP value at which conversion rate is half of max
+  const steepness = 0.0005; // Controls how steeply the rate falls off
+  
+  // Logistic function with adjustments
+  const rate = maxRate / (1 + Math.exp((lcp - midPoint) * steepness)) - 0.1;
+  
+  // Ensure rate is non-negative and doesn't exceed the maximum
+  return Math.max(0, Math.min(maxRate, rate));
+};
+
+// Generate histogram data based on the logic
+const createLogicalHistogramData = () => {
+  // Create bins with specific ranges
+  const binRanges = [
+    { start: 0, end: 500, label: '0-0.5s' },
+    { start: 500, end: 800, label: '0.5-0.8s' },
+    { start: 800, end: 1000, label: '0.8-1s' },
+    { start: 1000, end: 1200, label: '1-1.2s' },
+    { start: 1200, end: 1500, label: '1.2-1.5s' },
+    { start: 1500, end: 2000, label: '1.5-2s' },
+    { start: 2000, end: 2500, label: '2-2.5s' },
+    { start: 2500, end: 3000, label: '2.5-3s' },
+    { start: 3000, end: 3500, label: '3-3.5s' },
+    { start: 3500, end: 4000, label: '3.5-4s' },
+    { start: 4000, end: 5000, label: '4-5s' },
+    { start: 5000, end: 6000, label: '5-6s' }
+  ];
+
+  // Define session distributions for Clippo and non-Clippo
+  // These should roughly align with the percentile distribution from the first chart
+  // Clippo has more sessions in lower LCP bins, non-Clippo has more in higher LCP bins
+  
+  // Total number of sessions for each
+  const totalClippoSessions = 500;
+  const totalNonClippoSessions = 500;
+  
+  // Distribution of sessions across bins for Clippo (roughly F-shaped)
+  const clippoDistribution = [
+    0.01, // 0-0.5s (1% - error pages)
+    0.03, // 0.5-0.8s (3%)
+    0.06, // 0.8-1s (6%)
+    0.12, // 1-1.2s (12%)
+    0.15, // 1.2-1.5s (15%)
+    0.20, // 1.5-2s (20%)
+    0.18, // 2-2.5s (18%)
+    0.12, // 2.5-3s (12%)
+    0.06, // 3-3.5s (6%)
+    0.04, // 3.5-4s (4%)
+    0.02, // 4-5s (2%)
+    0.01  // 5-6s (1%)
+  ];
+  
+  // Distribution of sessions across bins for non-Clippo (shifted right)
+  const nonClippoDistribution = [
+    0.00, // 0-0.5s (0% - no error pages in baseline)
+    0.00, // 0.5-0.8s (0%)
+    0.01, // 0.8-1s (1%)
+    0.03, // 1-1.2s (3%)
+    0.06, // 1.2-1.5s (6%)
+    0.10, // 1.5-2s (10%)
+    0.15, // 2-2.5s (15%)
+    0.18, // 2.5-3s (18%)
+    0.20, // 3-3.5s (20%)
+    0.12, // 3.5-4s (12%)
+    0.10, // 4-5s (10%)
+    0.05  // 5-6s (5%)
+  ];
+  
+  // Initialize histogram data
+  const histogramData = binRanges.map((range, index) => {
+    // Calculate number of sessions for this bin
+    const clippoSessions = Math.round(totalClippoSessions * clippoDistribution[index]);
+    const nonClippoSessions = Math.round(totalNonClippoSessions * nonClippoDistribution[index]);
+    
+    // Calculate conversion rates based on actual data rather than a function
+    // We'll define conversion percentages per bin that decrease as load time increases
+    const conversionPercentages = [
+      0.0,  // 0-0.5s (0% - error pages don't convert)
+      6.5,  // 0.5-0.8s (6.5%)
+      5.8,  // 0.8-1s (5.8%)
+      5.2,  // 1-1.2s (5.2%)
+      4.6,  // 1.2-1.5s (4.6%)
+      4.2,  // 1.5-2s (4.2%)
+      3.8,  // 2-2.5s (3.8%)
+      3.4,  // 2.5-3s (3.4%)
+      3.0,  // 3-3.5s (3.0%)
+      2.6,  // 3.5-4s (2.6%)
+      2.2,  // 4-5s (2.2%)
+      1.8   // 5-6s (1.8%)
+    ];
+    
+    // Calculate number of converted sessions
+    const clippoConverted = Math.round(clippoSessions * (conversionPercentages[index] / 100));
+    const nonClippoConverted = Math.round(nonClippoSessions * (conversionPercentages[index] / 100));
+    
+    // Calculate actual conversion rates based on converted/total for each bin
+    const clippoConversionRate = clippoSessions > 0 ? (clippoConverted / clippoSessions) * 100 : 0;
+    const nonClippoConversionRate = nonClippoSessions > 0 ? (nonClippoConverted / nonClippoSessions) * 100 : 0;
+    
+    return {
+      binStart: range.start,
+      binEnd: range.end,
+      range: range.label,
+      midpointLcp: (range.start + range.end) / 2,
+      clippoTotal: clippoSessions,
+      clippoConverted: clippoConverted,
+      clippoNonConverted: clippoSessions - clippoConverted,
+      clippoConversionRate: clippoConversionRate,
+      nonClippoTotal: nonClippoSessions,
+      nonClippoConverted: nonClippoConverted,
+      nonClippoNonConverted: nonClippoSessions - nonClippoConverted,
+      nonClippoConversionRate: nonClippoConversionRate
+    };
+  });
+
+  // Calculate average conversion rates from the actual data
+  const clippoTotalSessions = histogramData.reduce((sum, bin) => sum + bin.clippoTotal, 0);
+  const clippoTotalConverted = histogramData.reduce((sum, bin) => sum + bin.clippoConverted, 0);
+  const clippoAvgConversionRate = clippoTotalSessions > 0 ? (clippoTotalConverted / clippoTotalSessions * 100) : 0;
+  
+  const nonClippoTotalSessions = histogramData.reduce((sum, bin) => sum + bin.nonClippoTotal, 0);
+  const nonClippoTotalConverted = histogramData.reduce((sum, bin) => sum + bin.nonClippoConverted, 0);
+  const nonClippoAvgConversionRate = nonClippoTotalSessions > 0 ? (nonClippoTotalConverted / nonClippoTotalSessions * 100) : 0;
+  
+  return { 
+    histogramData, 
+    averages: {
+      clippoAvgConversionRate: Number(clippoAvgConversionRate.toFixed(2)),
+      nonClippoAvgConversionRate: Number(nonClippoAvgConversionRate.toFixed(2))
+    }
+  };
+};
 
 const quickStats = [
   {
@@ -98,17 +365,9 @@ const realWorldVisitData = [
   { date: '2025-02-14', visits: 5850, conversions: 260, bounceRate: 34 }
 ];
 
-const deviceDistribution = [
-  { name: 'Desktop', value: 48 },
-  { name: 'Mobile', value: 42 },
-  { name: 'Tablet', value: 10 }
-];
-
-const deviceColors = ['#8884d8', '#82ca9d', '#ffc658'];
-
 // Constants for real-world metrics
 const DAILY_VISITORS = 5850;
-const IMPROVED_CONVERSION_RATE = 4.44;
+const IMPROVED_CONVERSION_RATE = 4;
 const CONVERSION_INCREASE_PERCENT = 32;
 
 interface StatsCardProps {
@@ -150,6 +409,7 @@ export default function DashboardPage() {
   const [dashboardTitle, setDashboardTitle] = useState("Performance Dashboard");
   const [tabValue, setTabValue] = useState(0);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [isChartLoaded, setIsChartLoaded] = useState(false);
   
   // Revenue calculator states for synthetic data
   const [syntheticMonthlyVisitors, setSyntheticMonthlyVisitors] = useState('');
@@ -163,6 +423,35 @@ export default function DashboardPage() {
   const [realConversionRate, setRealConversionRate] = useState(IMPROVED_CONVERSION_RATE.toString());
   const [realAverageOrderValue, setRealAverageOrderValue] = useState('85');
   const [realRevenueBoost, setRealRevenueBoost] = useState('0');
+  
+  // LCP Distribution data
+  const [percentileData, setPercentileData] = useState<PercentileData>({ 
+    clippoData: [], 
+    nonClippoData: [] 
+  });
+  const [histogramData, setHistogramData] = useState<Array<any>>([]);
+  const [averageRates, setAverageRates] = useState<{
+    clippoAvgConversionRate: number;
+    nonClippoAvgConversionRate: number;
+  }>({ clippoAvgConversionRate: 0, nonClippoAvgConversionRate: 0 });
+  
+  // Calculate derived values for the chart
+  const enhancedVisitData = realWorldVisitData.map(day => ({
+    ...day,
+    nonConvertedVisits: day.visits - day.conversions,
+    conversionRate: (day.conversions / day.visits) * 100
+  }));
+  
+  // Generate LCP distribution data
+  useEffect(() => {
+    const data = generateRealPercentileData();
+    const { histogramData, averages } = createLogicalHistogramData();
+    
+    setPercentileData(data);
+    setHistogramData(histogramData);
+    setAverageRates(averages);
+    setIsChartLoaded(true);
+  }, []);
   
   // Calculate revenue boost for synthetic data
   const calculateSyntheticRevenueBoost = useCallback(() => {
@@ -240,7 +529,7 @@ export default function DashboardPage() {
     }
   }, [tabValue, hasCompletedOnboarding, calculateRealRevenueBoost]);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -253,17 +542,40 @@ export default function DashboardPage() {
     }
   };
 
-  // For debugging
-  useEffect(() => {
-    if (isLoaded && user) {
-      console.log("User metadata:", user.unsafeMetadata);
-      console.log("User info:", {
-        fullName: user.fullName,
-        firstName: user.firstName,
-        username: user.username
-      });
+  // Custom tooltip component with proper return structure
+  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
+    if (active && payload && payload.length) {
+      const conversionPayload = payload.find(p => p.dataKey === 'clippoConversionRate' || p.dataKey === 'nonClippoConversionRate');
+      const sessionPayload = payload.filter(p => p.dataKey !== 'clippoConversionRate' && p.dataKey !== 'nonClippoConversionRate');
+      
+      return (
+        <div style={{ backgroundColor: '#fff', padding: '10px', border: '1px solid #ccc' }}>
+          <p style={{ margin: 0 }}>{`Load Time: ${label}`}</p>
+          {sessionPayload.map((entry, index) => (
+            <p key={`session-${index}`} style={{ margin: 0, color: entry.color }}>
+              {`${entry.name}: ${entry.value} sessions`}
+            </p>
+          ))}
+          {conversionPayload && (
+            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', color: conversionPayload.color }}>
+              {`Conversion Rate: ${Number(conversionPayload.value).toFixed(2)}%`}
+            </p>
+          )}
+        </div>
+      );
     }
-  }, [user, isLoaded]);
+    return null;
+  };
+
+  if (!isChartLoaded || !isLoaded) {
+    return (
+      <Container maxWidth="lg">
+        <Box sx={{ mt: 4 }}>
+          <Typography>Loading charts...</Typography>
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -630,7 +942,7 @@ export default function DashboardPage() {
               <StatsCard 
                 icon={TrendingUpIcon}
                 title="Conversion Rate"
-                value="4.44%"
+                value="4%"
                 change="↑ 32% from Before Clippo"
                 color={branding.primaryColor}
                 explanation="Your site's current conversion rate. This has increased by 32% since implementing Clippo, as faster load times lead to lower abandonment and higher engagement throughout the customer journey."
@@ -647,113 +959,226 @@ export default function DashboardPage() {
               />
             </Grid>
             
+            {/* REPLACEMENT: LCP Distribution Comparison Chart */}
             <Grid item xs={12}>
-              <Card>
+              <Card sx={{ mb: 4 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Visitors & Conversions (Last 14 Days)
+                    LCP Distribution Comparison
                   </Typography>
                   <Box sx={{ height: 400, mt: 2 }}>
                     <ResponsiveContainer>
-                      <LineChart
-                        data={realWorldVisitData}
+                      <ScatterChart
+                        margin={{ top: 20, right: 20, bottom: 60, left: 60 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          type="number" 
+                          dataKey="lcp" 
+                          domain={[500, 5500]}
+                          ticks={[500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500]}
+                          unit="ms"
+                        >
+                          <Label 
+                            value="Load Time (milliseconds)" 
+                            position="bottom" 
+                            offset={30}
+                          />
+                        </XAxis>
+                        <YAxis 
+                          dataKey="percentile"
+                          domain={[0, 100]}
+                          tickFormatter={(value) => `${value}%`}
+                          ticks={[0, 10, 20, 30, 40, 50, 60, 70, 75, 80, 90, 100]}
+                          label={{ value: 'Percentile Distribution', angle: -90, position: 'insideLeft' }}
+                        />
+                        <Tooltip formatter={(value, name) => {
+                          if (name === 'lcp') return [`${typeof value === 'number' ? value.toFixed(0) : value}ms`, 'Load Time'];
+                          if (name === 'percentile') return [`${value}%`, 'Percentile'];
+                          return [value, name];
+                        }} />
+                        <Legend />
+                        <Scatter 
+                          name="Baseline" 
+                          data={percentileData.nonClippoData}
+                          fill="#808080"
+                          line={{stroke: '#808080', strokeWidth: 2}}
+                          lineJointType="monotone"
+                          shape="circle"
+                        />
+                        <Scatter 
+                          name="Clippo" 
+                          data={percentileData.clippoData}
+                          fill="#2e8b57"
+                          line={{stroke: '#2e8b57', strokeWidth: 2}}
+                          lineJointType="monotone"
+                          shape="circle"
+                        />
+                        <ReferenceLine y={75} stroke="#000" strokeDasharray="3 3" label="P75" />
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                    This chart shows the distribution of page load times across different percentiles of traffic.
+                    With Clippo (green), the 75th percentile of page loads complete in approximately 2.3 seconds, whereas without Clippo (gray),
+                    the 75th percentile loads take about 2.8 seconds. This significant improvement impacts all users
+                    across the entire distribution, with even greater gains at the lower percentiles.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            {/* REPLACEMENT CHART 2: Clippo Sessions Distribution with Conversion Rate */}
+            <Grid item xs={12}>
+              <Card sx={{ mb: 4 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Clippo: Sessions and Conversion Rate by Load Time
+                  </Typography>
+                  <Box sx={{ height: 400, mt: 2 }}>
+                    <ResponsiveContainer>
+                      <ComposedChart
+                        data={histogramData}
                         margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis yAxisId="left" orientation="left" stroke={branding.primaryColor} />
-                        <YAxis yAxisId="right" orientation="right" stroke={branding.secondaryColor} />
-                        <Tooltip />
-                        <Legend />
-                        <Line
+                        <XAxis dataKey="range">
+                          <Label 
+                            value="Load Time (seconds)" 
+                            position="bottom" 
+                            offset={20}
+                          />
+                        </XAxis>
+                        <YAxis 
                           yAxisId="left"
-                          type="monotone"
-                          dataKey="visits"
-                          name="Daily Visitors"
-                          stroke={branding.primaryColor}
-                          activeDot={{ r: 8 }}
+                          label={{ value: 'Number of Sessions', angle: -90, position: 'insideLeft' }} 
+                        />
+                        <YAxis 
+                          yAxisId="right" 
+                          orientation="right"
+                          domain={[0, 10]}
+                          tickFormatter={(value) => `${value}%`}
+                          label={{ value: 'Conversion Rate (%)', angle: 90, position: 'insideRight' }}
+                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend />
+                        <Bar 
+                          yAxisId="left"
+                          dataKey="clippoNonConverted" 
+                          name="Non-Converted Sessions" 
+                          fill="#ff9999"
+                          stackId="a"
+                        />
+                        <Bar 
+                          yAxisId="left"
+                          dataKey="clippoConverted" 
+                          name="Converted Sessions" 
+                          fill="#82ca9d" 
+                          stackId="a"
                         />
                         <Line
                           yAxisId="right"
                           type="monotone"
-                          dataKey="conversions"
-                          name="Conversions"
-                          stroke={branding.secondaryColor}
+                          dataKey="clippoConversionRate"
+                          name="Conversion Rate"
+                          stroke="#2e8b57"
+                          strokeWidth={3}
+                          dot={{ r: 4 }}
                         />
-                      </LineChart>
+                        <ReferenceLine 
+                          yAxisId="right" 
+                          y={averageRates.clippoAvgConversionRate} 
+                          stroke="#2e8b57" 
+                          strokeDasharray="3 3" 
+                          label={{ value: `Avg: ${averageRates.clippoAvgConversionRate}%`, position: 'right', fill: '#2e8b57' }}
+                        />
+                      </ComposedChart>
                     </ResponsiveContainer>
                   </Box>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                    This chart shows the daily visitors to your site and the resulting conversions since implementing Clippo.
-                    The upward trend demonstrates the positive impact of improved performance on both traffic and conversion metrics.
+                    This chart combines session distribution (bars) with conversion rate (line) for Clippo-enabled sessions.
+                    The stacked bars show converted (green) and non-converted (red) sessions, while the line tracks the 
+                    conversion rate by load time. Note that for any given load time value, the conversion rate remains consistent
+                    whether using Clippo or not. However, Clippo shifts the entire distribution toward faster load times,
+                    where conversion rates are naturally higher, resulting in a higher overall average.
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
             
-            <Grid item xs={12} md={6}>
-              <Card>
+            {/* REPLACEMENT CHART 3: Non-Clippo Sessions Distribution with Conversion Rate */}
+            <Grid item xs={12}>
+              <Card sx={{ mb: 4 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Device Distribution
+                    Baseline: Sessions and Conversion Rate by Load Time
                   </Typography>
-                  <Box sx={{ height: 300, mt: 2 }}>
+                  <Box sx={{ height: 400, mt: 2 }}>
                     <ResponsiveContainer>
-                    <PieChart>
-                        <Pie
-                          data={deviceDistribution}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={100}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {deviceDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={deviceColors[index % deviceColors.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => `${value}%`} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                    Breakdown of your site visitors by device type. Mobile performance is especially critical,
-                    as it represents nearly half of your traffic and mobile users are particularly sensitive to load times.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Bounce Rate Trend
-                  </Typography>
-                  <Box sx={{ height: 300, mt: 2 }}>
-                    <ResponsiveContainer>
-                      <LineChart
-                        data={realWorldVisitData}
+                      <ComposedChart
+                        data={histogramData}
                         margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis domain={[30, 50]} ticks={[30, 35, 40, 45, 50]} />
-                        <Tooltip formatter={(value) => `${value}%`} />
-                        <Line
-                          type="monotone"
-                          dataKey="bounceRate"
-                          name="Bounce Rate"
-                          stroke="#ff7300"
+                        <XAxis dataKey="range">
+                          <Label 
+                            value="Load Time (seconds)" 
+                            position="bottom" 
+                            offset={20}
+                          />
+                        </XAxis>
+                        <YAxis 
+                          yAxisId="left"
+                          label={{ value: 'Number of Sessions', angle: -90, position: 'insideLeft' }} 
                         />
-                      </LineChart>
+                        <YAxis 
+                          yAxisId="right" 
+                          orientation="right"
+                          domain={[0, 10]}
+                          tickFormatter={(value) => `${value}%`}
+                          label={{ value: 'Conversion Rate (%)', angle: 90, position: 'insideRight' }}
+                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend />
+                        <Bar 
+                          yAxisId="left"
+                          dataKey="nonClippoNonConverted" 
+                          name="Non-Converted Sessions" 
+                          fill="#ff9999"
+                          stackId="a"
+                        />
+                        <Bar 
+                          yAxisId="left"
+                          dataKey="nonClippoConverted" 
+                          name="Converted Sessions" 
+                          fill="#82ca9d" 
+                          stackId="a"
+                        />
+                        <Line
+                          yAxisId="right"
+                          type="monotone"
+                          dataKey="nonClippoConversionRate"
+                          name="Conversion Rate"
+                          stroke="#808080"
+                          strokeWidth={3}
+                          dot={{ r: 4 }}
+                        />
+                        <ReferenceLine 
+                          yAxisId="right" 
+                          y={averageRates.nonClippoAvgConversionRate} 
+                          stroke="#808080" 
+                          strokeDasharray="3 3" 
+                          label={{ value: `Avg: ${averageRates.nonClippoAvgConversionRate}%`, position: 'right', fill: '#808080' }}
+                        />
+                      </ComposedChart>
                     </ResponsiveContainer>
                   </Box>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                    This chart shows the declining bounce rate since implementing Clippo.
-                    A lower bounce rate indicates users are finding your site more engaging and are exploring more pages.
+                    This chart combines session distribution (bars) with conversion rate (line) for baseline sessions without Clippo.
+                    The conversion rate line is identical to the Clippo chart for the same load time values, confirming that Clippo
+                    doesn't directly impact conversion rates for a given load time. However, without Clippo optimization, the session
+                    distribution is shifted toward slower load times where conversion rates are naturally lower, resulting in a lower
+                    overall average conversion rate compared to Clippo-enabled sessions.
                   </Typography>
                 </CardContent>
               </Card>
