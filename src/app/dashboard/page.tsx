@@ -122,16 +122,23 @@ function StatsCard({ icon: Icon, title, value, change, color, explanation }: Sta
 export default function DashboardPage() {
   const { user } = useUser();
   const router = useRouter();
+  const [displayDomain, setDisplayDomain] = useState(user?.unsafeMetadata?.domain || "Your");
   
-  const handleStartBetaTrial = () => {
-    const currentDomain = window.location.hostname;
-    router.push(`/onboarding?domain=${currentDomain}`);
-  };
+  // Get hostname on client-side only
+  useEffect(() => {
+    if (!user?.unsafeMetadata?.domain && typeof window !== 'undefined') {
+      setDisplayDomain(window.location.hostname || "Your");
+    }
+  }, [user?.unsafeMetadata?.domain]);
 
-  // Get domain from metadata, or fall back to other identifiers
-  const displayDomain = user?.unsafeMetadata?.domain || 
-                       window.location.hostname || 
-                       "Your";
+  const handleStartBetaTrial = () => {
+    if (typeof window !== 'undefined') {
+      const currentDomain = window.location.hostname;
+      router.push(`/onboarding?domain=${currentDomain}`);
+    } else {
+      router.push('/onboarding');
+    }
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
