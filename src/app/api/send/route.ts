@@ -127,7 +127,7 @@ export async function POST(req: Request) {
                 font-weight: 500;
               "
             >
-              Start Beta Trial
+              Visit Dashboard
             </a>
           </div>
         </div>
