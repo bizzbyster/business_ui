@@ -16,7 +16,7 @@ interface CompanyDetails {
   contactEmail: string;
 }
 
-const steps = ['Company Details', 'Terms & Conditions', 'Integration'];
+const steps = ['Organization Details', 'Terms & Conditions', 'Integration'];
 
 const termsContent = `Beta Program Terms & Conditions
 
@@ -83,7 +83,7 @@ export default function OnboardingPage() {
   }, [user]);
 
   const handleCompanyDetailsSubmit = (data: any) => {
-    console.log('Company details:', data);
+    console.log('Organization details:', data);
     setActiveStep(1);
   };
   
