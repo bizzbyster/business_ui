@@ -85,7 +85,7 @@ export async function POST(req: Request) {
               <ul style="color: #666;">
                 <li>LCP: 1600ms (27% faster)</li>
                 <li>FCP: 1200ms (33% improvement)</li>
-                <li>TTFB: 200ms (75% reduction)</li>
+                <li>TTFB: 400ms (50% reduction)</li>
               </ul>
             </div>
           </div>
@@ -93,26 +93,19 @@ export async function POST(req: Request) {
           <h2 style="color: #333;">Business Impact Analysis:</h2>
           <ul style="color: #666;">
             <li><strong>Conversion Impact:</strong> +12% estimated increase based on speed improvements</li>
-            <li><strong>Revenue Opportunity:</strong> Potential $24.8k monthly revenue boost</li>
             <li><strong>Speed Improvement:</strong> Up to 27% faster page loads</li>
+            <li><strong>Revenue Opportunity:</strong> Better speeds mean more revenue!</li>
           </ul>
 
           <h2 style="color: #333;">Key Findings:</h2>
           <ul style="color: #666;">
-            <li>Your current LCP of 2200ms is above Google's recommended threshold</li>
             <li>75% of your page loads can complete under 1.6s with our optimizations</li>
             <li>Potential for significant conversion rate improvements</li>
-            <li>Server response time can be reduced by up to 75%</li>
+            <li>Server response time can be reduced by up to 50%</li>
           </ul>
 
-          <h2 style="color: #333;">Ready to boost your website's speed?</h2>
-          <p style="color: #666;">Start your beta trial with Clippo today. Our optimizations can help you:</p>
-          <ul style="color: #666;">
-            <li>Reduce loading times by up to 27%</li>
-            <li>Improve Core Web Vitals scores</li>
-            <li>Boost conversion rates by an estimated 12%</li>
-            <li>Enhance user experience and engagement</li>
-          </ul>
+          <h2 style="color: #333;">Sounds too good to be true?</h2>
+          <p style="color: #666;">Dive into the details, check out this dashboard we put together to display our full analysis on your site:</p>
 
           <div style="text-align: center; margin-top: 30px;">
             <a 

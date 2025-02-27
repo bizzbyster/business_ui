@@ -73,8 +73,7 @@ export default function DomainForm() {
                   Receive Your Performance Analysis (in up to 24 hrs)
                 </Typography>
                 <Typography color="text.secondary">
-                  Check your inbox for a detailed analysis of your website's current performance metrics,
-                  including Core Web Vitals and potential optimizations.
+                  Check your inbox for a detailed analysis of your website's current performance metrics.
                 </Typography>
               </div>
             </Box>
@@ -99,8 +98,7 @@ export default function DomainForm() {
                   Start Your Beta Trial
                 </Typography>
                 <Typography color="text.secondary">
-                  Begin your optimization journey and track real-world performance improvements
-                  as we enhance your website's speed and user experience.
+                  Track real-world performance improvements on your site within a controlled environment.
                 </Typography>
               </div>
             </Box>
