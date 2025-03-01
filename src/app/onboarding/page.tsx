@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Container, Typography, Box, Stepper, Step, StepLabel, Card, CardContent, Button, FormControlLabel, Checkbox, Link as MuiLink } from '@mui/material';
 import { branding } from '@/config/branding';
 import CompanyDetailsForm from '@/components/CompanyDetailsForm';
@@ -8,6 +8,7 @@ import CodeSnippet from '@/components/CodeSnippet';
 import { useRouter } from 'next/navigation';
 import NavBar from '@/components/NavBar';
 import Link from 'next/link';
+import { useUser } from '@clerk/nextjs';
 
 interface CompanyDetails {
   name: string;
@@ -15,7 +16,7 @@ interface CompanyDetails {
   contactEmail: string;
 }
 
-const steps = ['Company Details', 'Terms & Conditions', 'Integration'];
+const steps = ['Organization Details', 'Terms & Conditions', 'Integration'];
 
 const termsContent = `Beta Program Terms & Conditions
 
@@ -65,12 +66,55 @@ const initSnippet = `<script>
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { user } = useUser();
   const [activeStep, setActiveStep] = useState(0);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  
+  // Load saved state from metadata if available
+  useEffect(() => {
+    if (user?.unsafeMetadata?.onboardingStep) {
+      const savedStep = Number(user.unsafeMetadata.onboardingStep);
+      setActiveStep(savedStep);
+      
+      if (savedStep >= 1) {
+        setTermsAccepted(true);
+      }
+    }
+  }, [user]);
 
-  const handleCompanyDetailsSubmit = (data: CompanyDetails) => {
-    console.log('Company details:', data);
+  const handleCompanyDetailsSubmit = (data: any) => {
+    console.log('Organization details:', data);
     setActiveStep(1);
+  };
+  
+  const handleTermsAccept = async () => {
+    try {
+      await user?.update({
+        unsafeMetadata: {
+          ...user.unsafeMetadata, // Preserve existing metadata
+          termsAccepted: true,
+          onboardingStep: 2
+        }
+      });
+      setActiveStep(2);
+    } catch (error) {
+      console.error('Error updating user metadata:', error);
+    }
+  };
+  
+  const completeOnboarding = async () => {
+    try {
+      await user?.update({
+        unsafeMetadata: {
+          ...user.unsafeMetadata, // Preserve existing metadata
+          onboardingCompleted: true,
+          onboardingStep: 3
+        }
+      });
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error updating user metadata:', error);
+    }
   };
 
   const renderStepContent = () => {
@@ -82,7 +126,6 @@ export default function OnboardingPage() {
             onBack={() => router.push('/')}
           />
         );
-
       case 1:
         return (
           <Box sx={{ p: 3, maxWidth: 600, mx: 'auto' }}>
@@ -119,7 +162,7 @@ export default function OnboardingPage() {
               <Button 
                 variant="contained" 
                 disabled={!termsAccepted}
-                onClick={() => setActiveStep(2)}
+                onClick={handleTermsAccept}
                 color="primary"
               >
                 Continue
@@ -127,7 +170,6 @@ export default function OnboardingPage() {
             </Box>
           </Box>
         );
-
       case 2:
         return (
           <Box sx={{ p: 3, maxWidth: 600, mx: 'auto' }}>
@@ -164,7 +206,7 @@ export default function OnboardingPage() {
               <Button onClick={() => setActiveStep(1)}>Back</Button>
               <Button 
                 variant="contained"
-                onClick={() => router.push('/dashboard')}
+                onClick={completeOnboarding}
                 color="primary"
               >
                 Complete Setup
@@ -172,6 +214,8 @@ export default function OnboardingPage() {
             </Box>
           </Box>
         );
+      default:
+        return null;
     }
   };
 

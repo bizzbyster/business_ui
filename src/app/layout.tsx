@@ -2,8 +2,10 @@ import { ClerkProvider } from "@clerk/nextjs";
 import ThemeRegistry from "../components/ThemeRegistry";
 
 export const metadata = {
-  title: "Enterprise Solutions Inc.",
-  description: "Enterprise-grade solutions for modern businesses",
+    title: "Enterprise Solutions Inc.",
+    description: "Enterprise-grade solutions for modern businesses",
+    robots: "noindex, nofollow",
+    googleBot: "noindex, nofollow",
 };
 
 export default function RootLayout({

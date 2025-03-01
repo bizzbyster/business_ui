@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, TextField, Button, Typography } from "@mui/material";
+import { useUser } from "@clerk/nextjs";
 
 export default function CompanyDetailsForm({
   onSubmit,
@@ -9,16 +10,34 @@ export default function CompanyDetailsForm({
   onSubmit: (data: any) => void;
   onBack: () => void;
 }) {
-  const handleSubmit = (event: React.FormEvent) => {
+  const { user } = useUser();
+  
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     const data = {
-      fullName: formData.get("fullName"),
       companyName: formData.get("companyName"),
-      jobTitle: formData.get("jobTitle"),
-      domain: formData.get("domain"),
+      teamEmails: formData.get("teamEmails"),
     };
-    onSubmit(data);
+    
+    try {
+      // Use unsafeMetadata for frontend updates
+      if (user) {
+        await user.update({
+          unsafeMetadata: {
+            ...user.unsafeMetadata, // Merge with existing data
+            companyName: data.companyName,
+            teamEmails: data.teamEmails,
+            onboardingStep: 1
+          }
+        });
+      }
+      
+      // Call original handler
+      onSubmit(data);
+    } catch (error) {
+      console.error("Error updating user metadata:", error);
+    }
   };
 
   return (
@@ -35,40 +54,32 @@ export default function CompanyDetailsForm({
       }}
     >
       <Typography variant="h6" gutterBottom>
-        Tell us about your company
+        Name your organization
+      </Typography>
+      <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+        Your organization is your dedicated workspace within our platform, where you can manage settings and customize your experience.
       </Typography>
 
       <TextField
-        name="fullName"
-        label="Full Name"
-        required
-        fullWidth
-        margin="normal"
-      />
-
-      <TextField
         name="companyName"
-        label="Company Name"
+        label="Organization Name"
         required
         fullWidth
         margin="normal"
+        defaultValue={user?.unsafeMetadata?.companyName || ""}
       />
 
+      <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>
+        Invite collaborators
+      </Typography>
       <TextField
-        name="jobTitle"
-        label="Job Title"
-        required
+        name="teamEmails"
+        label="Team Member Emails (up to 3, comma-separated)"
         fullWidth
         margin="normal"
-      />
-
-      <TextField
-        name="domain"
-        label="Website Domain"
-        required
-        fullWidth
-        margin="normal"
-        placeholder="example.com"
+        placeholder="colleague1@example.com, colleague2@example.com"
+        defaultValue={user?.unsafeMetadata?.teamEmails || ""}
+        helperText="Add up to 3 team members who will get dashboard access"
       />
 
       <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>

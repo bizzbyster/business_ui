@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import EmailIcon from '@mui/icons-material/Email';
 import SpeedIcon from '@mui/icons-material/Speed';
-import BarChartIcon from '@mui/icons-material/BarChart';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 
 export default function DomainForm() {
   const [domain, setDomain] = useState("");
@@ -37,13 +37,14 @@ export default function DomainForm() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to send analysis request");
+        throw new Error(errorData.error || "Failed to process request");
       }
 
       setIsSubmitted(true);
       
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+      console.error('Error:', error);
+      setError(error instanceof Error ? error.message : "Failed to process request");
     } finally {
       setIsSubmitting(false);
     }
@@ -57,7 +58,7 @@ export default function DomainForm() {
             Thank you for requesting your site evaluation!
           </Typography>
           <Typography variant="h6" color="text.secondary" align="center" sx={{ mb: 4 }}>
-            You're one step closer to unlocking your site's full potential.
+            Let's unlock your website's full performance potential.
           </Typography>
 
           <Typography variant="h5" gutterBottom sx={{ mb: 4, fontWeight: 500 }}>
@@ -69,11 +70,10 @@ export default function DomainForm() {
               <EmailIcon sx={{ color: 'primary.main', fontSize: 32 }} />
               <div>
                 <Typography variant="h6" gutterBottom>
-                  Initial Analysis Email (1 minute)
+                  Receive Your Performance Analysis (in up to 24 hrs)
                 </Typography>
                 <Typography color="text.secondary">
-                  You'll receive an email shortly with your site's current performance metrics 
-                  and Core Web Vitals scores.
+                  Check your inbox for a detailed analysis of your website's current performance metrics.
                 </Typography>
               </div>
             </Box>
@@ -82,24 +82,23 @@ export default function DomainForm() {
               <SpeedIcon sx={{ color: 'primary.main', fontSize: 32 }} />
               <div>
                 <Typography variant="h6" gutterBottom>
-                  Detailed Performance Report
+                  Access Your Performance Dashboard
                 </Typography>
                 <Typography color="text.secondary">
-                  A comprehensive analysis of your site's speed, including loading times, 
-                  user experience metrics, and potential optimization opportunities.
+                  We'll provide a comprehensive dashboard showing synthetic test data 
+                  to demonstrate your site's optimization potential.
                 </Typography>
               </div>
             </Box>
 
             <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
-              <BarChartIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+              <RocketLaunchIcon sx={{ color: 'primary.main', fontSize: 32 }} />
               <div>
                 <Typography variant="h6" gutterBottom>
-                  Get Ready to Boost Conversions
+                  Start Your Beta Trial
                 </Typography>
                 <Typography color="text.secondary">
-                  After reviewing your analysis, you'll have access to actionable insights 
-                  to improve your site's performance and drive better business results.
+                  Track real-world performance improvements on your site within a controlled environment.
                 </Typography>
               </div>
             </Box>
@@ -108,7 +107,7 @@ export default function DomainForm() {
           <Box sx={{ textAlign: 'center', mt: 4 }}>
             <Typography variant="body1" color="text.secondary">
               Keep an eye on your inbox for your performance analysis.
-              If you don't see it within a few minutes, please check your spam folder.
+              If you don't see it within 24 hours, please check your spam folder.
             </Typography>
           </Box>
         </CardContent>
