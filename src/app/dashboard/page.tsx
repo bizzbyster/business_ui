@@ -46,11 +46,44 @@ interface TooltipProps {
   label?: string;
 }
 
-const generateLoadTimes = (minTime: number, maxTime: number, count: number) => {
+// Generate curves similar to the real-world example with adjusted max values
+const generateLoadTimes = (minTime: number, maxTime: number, count: number, isClipper: boolean) => {
   return Array.from({ length: count }, (_, i) => {
     const percentile = i / (count - 1);
-    const sigmoid = 1 / (1 + Math.exp(-12 * (percentile - 0.5)));
-    const lcp = minTime + (maxTime - minTime) * sigmoid;
+    
+    let lcp: number;
+    
+    if (isClipper) {
+      // Starting around 900ms, ending around 1600ms with steep rise between 20-40%
+      if (percentile < 0.1) {
+        // Initial slow rise
+        lcp = 900 + (percentile / 0.1) * 100;
+      } else if (percentile < 0.3) {
+        // Steeper rise in the middle-lower section
+        lcp = 1000 + ((percentile - 0.1) / 0.2) * 400;
+      } else if (percentile < 0.7) {
+        // Steady climb in the middle section
+        lcp = 1400 + ((percentile - 0.3) / 0.4) * 500;
+      } else {
+        // Final gentle approach to max
+        lcp = 1900 + ((percentile - 0.7) / 0.3) * 200;
+      }
+    } else {
+      // Starting around 1300ms, ending around 3400-3500ms
+      if (percentile < 0.15) {
+        // Initial flat part
+        lcp = 1300 + (percentile / 0.15) * 200;
+      } else if (percentile < 0.4) {
+        // First main rise
+        lcp = 1500 + ((percentile - 0.15) / 0.25) * 500;
+      } else if (percentile < 0.75) {
+        // Second main rise
+        lcp = 2000 + ((percentile - 0.4) / 0.35) * 1000;
+      } else {
+        // Final gentler rise to max
+        lcp = 3000 + ((percentile - 0.75) / 0.25) * 400;
+      }
+    }
     
     return {
       lcp,
@@ -59,8 +92,9 @@ const generateLoadTimes = (minTime: number, maxTime: number, count: number) => {
   });
 };
 
-const baselineLCP = generateLoadTimes(1800, 2200, 100);
-const clippoLCP = generateLoadTimes(1200, 1600, 100);
+// Generate 40 points for each curve to get detailed shapes
+const clippoLCP = generateLoadTimes(900, 2100, 40, true);
+const baselineLCP = generateLoadTimes(1300, 3400, 40, false);
 
 // Real data extrapolated from the provided graph
 const generateRealPercentileData = (): PercentileData => {
@@ -173,6 +207,9 @@ const getConversionRateForLcp = (lcp: number): number => {
   return Math.max(0, Math.min(maxRate, rate));
 };
 
+// Base conversion rate - change this value to adjust all conversion rates
+const BASE_CONVERSION_RATE = 4;
+
 // Generate histogram data based on the logic
 const createLogicalHistogramData = () => {
   // Create bins with specific ranges
@@ -237,22 +274,24 @@ const createLogicalHistogramData = () => {
     const clippoSessions = Math.round(totalClippoSessions * clippoDistribution[index]);
     const nonClippoSessions = Math.round(totalNonClippoSessions * nonClippoDistribution[index]);
     
-    // Calculate conversion rates based on actual data rather than a function
-    // We'll define conversion percentages per bin that decrease as load time increases
-    const conversionPercentages = [
-      0.0,  // 0-0.5s (0% - error pages don't convert)
-      6.5,  // 0.5-0.8s (6.5%)
-      5.8,  // 0.8-1s (5.8%)
-      5.2,  // 1-1.2s (5.2%)
-      4.6,  // 1.2-1.5s (4.6%)
-      4.2,  // 1.5-2s (4.2%)
-      3.8,  // 2-2.5s (3.8%)
-      3.4,  // 2.5-3s (3.4%)
-      3.0,  // 3-3.5s (3.0%)
-      2.6,  // 3.5-4s (2.6%)
-      2.2,  // 4-5s (2.2%)
-      1.8   // 5-6s (1.8%)
+    // Base conversion percentages (ratio to the max rate)
+    const baseConversionRatios = [
+      0.0,   // 0-0.5s (0% - error pages don't convert)
+      1.0,   // 0.5-0.8s (100% of base rate)
+      0.892, // 0.8-1s (89.2% of base rate)
+      0.8,   // 1-1.2s (80% of base rate)
+      0.708, // 1.2-1.5s (70.8% of base rate)
+      0.646, // 1.5-2s (64.6% of base rate)
+      0.585, // 2-2.5s (58.5% of base rate)
+      0.523, // 2.5-3s (52.3% of base rate)
+      0.462, // 3-3.5s (46.2% of base rate)
+      0.4,   // 3.5-4s (40% of base rate)
+      0.338, // 4-5s (33.8% of base rate)
+      0.277  // 5-6s (27.7% of base rate)
     ];
+    
+    // Calculate conversion percentages based on BASE_CONVERSION_RATE
+    const conversionPercentages = baseConversionRatios.map(ratio => ratio * BASE_CONVERSION_RATE);
     
     // Calculate number of converted sessions
     const clippoConverted = Math.round(clippoSessions * (conversionPercentages[index] / 100));
@@ -299,7 +338,7 @@ const createLogicalHistogramData = () => {
 const quickStats = [
   {
     icon: SpeedIcon,
-    title: 'Current LCP',
+    title: 'Baseline LCP',
     value: '2200ms',
     change: '↓ Needs Improvement',
     color: branding.secondaryColor,
@@ -639,8 +678,8 @@ export default function DashboardPage() {
                           dataKey="lcp" 
                           name="LCP" 
                           unit="ms"
-                          domain={[1000, 2400]}
-                          ticks={[1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400]}
+                          domain={[500, 3500]}
+                          ticks={[500, 1000, 1500, 2000, 2500, 3000, 3500]}
                         >
                           <Label 
                             value="Load Time (milliseconds)" 
@@ -688,13 +727,17 @@ export default function DashboardPage() {
                           name="Without Clippo" 
                           data={baselineLCP}
                           fill={branding.secondaryColor}
-                          fillOpacity={0.6}
+                          line={{stroke: branding.secondaryColor, strokeWidth: 2, type: 'monotone'}}
+                          lineJointType="monotone"
+                          shape="circle"
                         />
                         <Scatter 
                           name="With Clippo" 
                           data={clippoLCP}
                           fill={branding.primaryColor}
-                          fillOpacity={0.6}
+                          line={{stroke: branding.primaryColor, strokeWidth: 2, type: 'monotone'}}
+                          lineJointType="monotone"
+                          shape="circle"
                         />
                       </ScatterChart>
                     </ResponsiveContainer>
@@ -929,35 +972,35 @@ export default function DashboardPage() {
         <>
           <Grid container spacing={3}>
             <Grid item xs={12} md={4}>
-              <StatsCard 
-                icon={PeopleIcon}
-                title="Daily Visitors"
-                value="5,850"
-                change="↑ 39% from Before Clippo"
-                color={branding.primaryColor}
-                explanation="The current average daily visitors to your site. This metric has seen a 39% increase since implementing Clippo, as improved performance leads to better search engine rankings and user satisfaction."
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <StatsCard 
-                icon={TrendingUpIcon}
-                title="Conversion Rate"
-                value="4%"
-                change="↑ 32% from Before Clippo"
-                color={branding.primaryColor}
-                explanation="Your site's current conversion rate. This has increased by 32% since implementing Clippo, as faster load times lead to lower abandonment and higher engagement throughout the customer journey."
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <StatsCard 
-                icon={SpeedIcon}
-                title="Bounce Rate"
-                value="34%"
-                change="↓ 14% from Before Clippo"
-                color={branding.primaryColor}
-                explanation="Your site's current bounce rate. This has decreased by 14% since implementing Clippo, as users are more likely to engage with your site when it loads quickly and responds to their interactions promptly."
-              />
-            </Grid>
+    <StatsCard 
+      icon={SpeedIcon}
+      title="Baseline LCP"
+      value="2200ms"
+      change="↓ Needs Improvement"
+      color={branding.secondaryColor}
+      explanation="Your current Largest Contentful Paint (LCP) at 75th percentile is 2200ms. This means 75% of your page loads complete their main content render within this time. An LCP under 2500ms is considered 'good' by Google, but every millisecond counts and can affect business metrics."
+    />
+  </Grid>
+  <Grid item xs={12} md={4}>
+    <StatsCard 
+      icon={SpeedIcon}
+      title="Clippo LCP"
+      value="1600ms"
+      change="↑ 27% Faster with Clippo"
+      color={branding.primaryColor}
+      explanation="With Clippo implemented, your LCP has been reduced to approximately 1600ms at the 75th percentile. This improvement was achieved through our advanced caching, optimized resource loading, and efficient content delivery technology."
+    />
+  </Grid>
+  <Grid item xs={12} md={4}>
+    <StatsCard 
+      icon={TrendingUpIcon}
+      title="Conversion Impact"
+      value="+12%"
+      change="↑ Estimated Increase"
+      color={branding.primaryColor}
+      explanation="Based on the real-world data collected since implementing Clippo, the 27% speed improvement has resulted in a 12% increase in your conversion rate. This confirms our synthetic projections and demonstrates the direct relationship between load times and business outcomes."
+    />
+  </Grid>
             
             {/* REPLACEMENT: LCP Distribution Comparison Chart */}
             <Grid item xs={12}>
@@ -1001,16 +1044,16 @@ export default function DashboardPage() {
                         <Scatter 
                           name="Baseline" 
                           data={percentileData.nonClippoData}
-                          fill="#808080"
-                          line={{stroke: '#808080', strokeWidth: 2}}
+                          fill={branding.secondaryColor}
+                          line={{stroke: branding.secondaryColor, strokeWidth: 2}}
                           lineJointType="monotone"
                           shape="circle"
                         />
                         <Scatter 
                           name="Clippo" 
                           data={percentileData.clippoData}
-                          fill="#2e8b57"
-                          line={{stroke: '#2e8b57', strokeWidth: 2}}
+                          fill={branding.primaryColor}
+                          line={{stroke: branding.primaryColor, strokeWidth: 2}}
                           lineJointType="monotone"
                           shape="circle"
                         />
@@ -1029,160 +1072,160 @@ export default function DashboardPage() {
             </Grid>
             
             {/* REPLACEMENT CHART 2: Clippo Sessions Distribution with Conversion Rate */}
-            <Grid item xs={12}>
-              <Card sx={{ mb: 4 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Clippo: Sessions and Conversion Rate by Load Time
-                  </Typography>
-                  <Box sx={{ height: 400, mt: 2 }}>
-                    <ResponsiveContainer>
-                      <ComposedChart
-                        data={histogramData}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="range">
-                          <Label 
-                            value="Load Time (seconds)" 
-                            position="bottom" 
-                            offset={20}
+              <Grid item xs={12}>
+                <Card sx={{ mb: 4 }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Clippo: Sessions and Conversion Rate by Load Time
+                    </Typography>
+                    <Box sx={{ height: 400, mt: 2 }}>
+                      <ResponsiveContainer>
+                        <ComposedChart
+                          data={histogramData}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="range">
+                            <Label 
+                              value="Load Time (seconds)" 
+                              position="bottom" 
+                              offset={20}
+                            />
+                          </XAxis>
+                          <YAxis 
+                            yAxisId="left"
+                            label={{ value: 'Number of Sessions', angle: -90, position: 'insideLeft' }} 
                           />
-                        </XAxis>
-                        <YAxis 
-                          yAxisId="left"
-                          label={{ value: 'Number of Sessions', angle: -90, position: 'insideLeft' }} 
-                        />
-                        <YAxis 
-                          yAxisId="right" 
-                          orientation="right"
-                          domain={[0, 10]}
-                          tickFormatter={(value) => `${value}%`}
-                          label={{ value: 'Conversion Rate (%)', angle: 90, position: 'insideRight' }}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend />
-                        <Bar 
-                          yAxisId="left"
-                          dataKey="clippoNonConverted" 
-                          name="Non-Converted Sessions" 
-                          fill="#ff9999"
-                          stackId="a"
-                        />
-                        <Bar 
-                          yAxisId="left"
-                          dataKey="clippoConverted" 
-                          name="Converted Sessions" 
-                          fill="#82ca9d" 
-                          stackId="a"
-                        />
-                        <Line
-                          yAxisId="right"
-                          type="monotone"
-                          dataKey="clippoConversionRate"
-                          name="Conversion Rate"
-                          stroke="#2e8b57"
-                          strokeWidth={3}
-                          dot={{ r: 4 }}
-                        />
-                        <ReferenceLine 
-                          yAxisId="right" 
-                          y={averageRates.clippoAvgConversionRate} 
-                          stroke="#2e8b57" 
-                          strokeDasharray="3 3" 
-                          label={{ value: `Avg: ${averageRates.clippoAvgConversionRate}%`, position: 'right', fill: '#2e8b57' }}
-                        />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                    This chart combines session distribution (bars) with conversion rate (line) for Clippo-enabled sessions.
-                    The stacked bars show converted (green) and non-converted (red) sessions, while the line tracks the 
-                    conversion rate by load time. Note that for any given load time value, the conversion rate remains consistent
-                    whether using Clippo or not. However, Clippo shifts the entire distribution toward faster load times,
-                    where conversion rates are naturally higher, resulting in a higher overall average.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            {/* REPLACEMENT CHART 3: Non-Clippo Sessions Distribution with Conversion Rate */}
-            <Grid item xs={12}>
-              <Card sx={{ mb: 4 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Baseline: Sessions and Conversion Rate by Load Time
-                  </Typography>
-                  <Box sx={{ height: 400, mt: 2 }}>
-                    <ResponsiveContainer>
-                      <ComposedChart
-                        data={histogramData}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="range">
-                          <Label 
-                            value="Load Time (seconds)" 
-                            position="bottom" 
-                            offset={20}
+                          <YAxis 
+                            yAxisId="right" 
+                            orientation="right"
+                            domain={[0, 10]}
+                            tickFormatter={(value) => `${value}%`}
+                            label={{ value: 'Conversion Rate (%)', angle: 90, position: 'insideRight' }}
                           />
-                        </XAxis>
-                        <YAxis 
-                          yAxisId="left"
-                          label={{ value: 'Number of Sessions', angle: -90, position: 'insideLeft' }} 
-                        />
-                        <YAxis 
-                          yAxisId="right" 
-                          orientation="right"
-                          domain={[0, 10]}
-                          tickFormatter={(value) => `${value}%`}
-                          label={{ value: 'Conversion Rate (%)', angle: 90, position: 'insideRight' }}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend />
-                        <Bar 
-                          yAxisId="left"
-                          dataKey="nonClippoNonConverted" 
-                          name="Non-Converted Sessions" 
-                          fill="#ff9999"
-                          stackId="a"
-                        />
-                        <Bar 
-                          yAxisId="left"
-                          dataKey="nonClippoConverted" 
-                          name="Converted Sessions" 
-                          fill="#82ca9d" 
-                          stackId="a"
-                        />
-                        <Line
-                          yAxisId="right"
-                          type="monotone"
-                          dataKey="nonClippoConversionRate"
-                          name="Conversion Rate"
-                          stroke="#808080"
-                          strokeWidth={3}
-                          dot={{ r: 4 }}
-                        />
-                        <ReferenceLine 
-                          yAxisId="right" 
-                          y={averageRates.nonClippoAvgConversionRate} 
-                          stroke="#808080" 
-                          strokeDasharray="3 3" 
-                          label={{ value: `Avg: ${averageRates.nonClippoAvgConversionRate}%`, position: 'right', fill: '#808080' }}
-                        />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                    This chart combines session distribution (bars) with conversion rate (line) for baseline sessions without Clippo.
-                    The conversion rate line is identical to the Clippo chart for the same load time values, confirming that Clippo
-                    doesn't directly impact conversion rates for a given load time. However, without Clippo optimization, the session
-                    distribution is shifted toward slower load times where conversion rates are naturally lower, resulting in a lower
-                    overall average conversion rate compared to Clippo-enabled sessions.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend />
+                          <Bar 
+                            yAxisId="left"
+                            dataKey="clippoNonConverted" 
+                            name="Non-Converted Sessions" 
+                            fill="#808080"
+                            stackId="a"
+                          />
+                          <Bar 
+                            yAxisId="left"
+                            dataKey="clippoConverted" 
+                            name="Converted Sessions" 
+                            fill={branding.primaryColor} 
+                            stackId="a"
+                          />
+                          <Line
+                            yAxisId="right"
+                            type="monotone"
+                            dataKey="clippoConversionRate"
+                            name="Conversion Rate"
+                            stroke={branding.primaryColor}
+                            strokeWidth={3}
+                            dot={{ r: 4 }}
+                          />
+                          <ReferenceLine 
+                            yAxisId="right" 
+                            y={averageRates.clippoAvgConversionRate} 
+                            stroke={branding.primaryColor} 
+                            strokeDasharray="3 3" 
+                            label={{ value: `Avg: ${averageRates.clippoAvgConversionRate}%`, position: 'right', fill: branding.primaryColor }}
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                      This chart combines session distribution (bars) with conversion rate (line) for Clippo-enabled sessions.
+                      The stacked bars show converted (blue) and non-converted (light red) sessions, while the line tracks the 
+                      conversion rate by load time. Note that for any given load time value, the conversion rate remains consistent
+                      whether using Clippo or not. However, Clippo shifts the entire distribution toward faster load times,
+                      where conversion rates are naturally higher, resulting in a higher overall average.
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* REPLACEMENT CHART 3: Non-Clippo Sessions Distribution with Conversion Rate */}
+              <Grid item xs={12}>
+                <Card sx={{ mb: 4 }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Baseline: Sessions and Conversion Rate by Load Time
+                    </Typography>
+                    <Box sx={{ height: 400, mt: 2 }}>
+                      <ResponsiveContainer>
+                        <ComposedChart
+                          data={histogramData}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="range">
+                            <Label 
+                              value="Load Time (seconds)" 
+                              position="bottom" 
+                              offset={20}
+                            />
+                          </XAxis>
+                          <YAxis 
+                            yAxisId="left"
+                            label={{ value: 'Number of Sessions', angle: -90, position: 'insideLeft' }} 
+                          />
+                          <YAxis 
+                            yAxisId="right" 
+                            orientation="right"
+                            domain={[0, 10]}
+                            tickFormatter={(value) => `${value}%`}
+                            label={{ value: 'Conversion Rate (%)', angle: 90, position: 'insideRight' }}
+                          />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend />
+                          <Bar 
+                            yAxisId="left"
+                            dataKey="nonClippoNonConverted" 
+                            name="Non-Converted Sessions" 
+                            fill="#808080"
+                            stackId="a"
+                          />
+                          <Bar 
+                            yAxisId="left"
+                            dataKey="nonClippoConverted" 
+                            name="Converted Sessions" 
+                            fill={branding.secondaryColor} 
+                            stackId="a"
+                          />
+                          <Line
+                            yAxisId="right"
+                            type="monotone"
+                            dataKey="nonClippoConversionRate"
+                            name="Conversion Rate"
+                            stroke={branding.secondaryColor}
+                            strokeWidth={3}
+                            dot={{ r: 4 }}
+                          />
+                          <ReferenceLine 
+                            yAxisId="right" 
+                            y={averageRates.nonClippoAvgConversionRate} 
+                            stroke={branding.secondaryColor} 
+                            strokeDasharray="3 3" 
+                            label={{ value: `Avg: ${averageRates.nonClippoAvgConversionRate}%`, position: 'right', fill: branding.secondaryColor }}
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                      This chart combines session distribution (bars) with conversion rate (line) for baseline sessions without Clippo.
+                      The conversion rate line is identical to the Clippo chart for the same load time values, confirming that Clippo
+                      doesn't directly impact conversion rates for a given load time. However, without Clippo optimization, the session
+                      distribution is shifted toward slower load times where conversion rates are naturally lower, resulting in a lower
+                      overall average conversion rate compared to Clippo-enabled sessions.
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
             
             {/* Revenue Boost Calculator for Real World Data */}
             <Grid item xs={12}>
