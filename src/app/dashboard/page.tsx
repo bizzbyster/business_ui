@@ -207,6 +207,9 @@ const getConversionRateForLcp = (lcp: number): number => {
   return Math.max(0, Math.min(maxRate, rate));
 };
 
+// Add this line
+const HARDCODED_CONVERSION_RATE = 5; // Hardcoded 5% conversion rate
+
 // Generate histogram data based on the logic
 const createLogicalHistogramData = (userConversionRate = 4) => {
   // Create bins with specific ranges
@@ -447,8 +450,6 @@ export default function DashboardPage() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isChartLoaded, setIsChartLoaded] = useState(false);
   
-  // Add state for user's conversion rate
-  const [userConversionRate, setUserConversionRate] = useState(4); // Default to 4%
   
   // Revenue calculator states for synthetic data
   const [syntheticMonthlyVisitors, setSyntheticMonthlyVisitors] = useState('');
@@ -485,14 +486,14 @@ export default function DashboardPage() {
   useEffect(() => {
     const data = generateRealPercentileData();
     
-    // Pass the user's conversion rate to the histogram data generator
-    const { histogramData, averages } = createLogicalHistogramData(userConversionRate);
+    // Use the hardcoded conversion rate instead
+    const { histogramData, averages } = createLogicalHistogramData(HARDCODED_CONVERSION_RATE);
     
     setPercentileData(data);
     setHistogramData(histogramData);
     setAverageRates(averages);
     setIsChartLoaded(true);
-  }, [userConversionRate]); // Add userConversionRate as a dependency
+  }, []); // Remove the dependency
   
   // Calculate revenue boost for synthetic data
   const calculateSyntheticRevenueBoost = useCallback(() => {
@@ -537,7 +538,7 @@ export default function DashboardPage() {
     }
   }, [realMonthlyVisitors, realConversionRate, realAverageOrderValue]);
   
-  // Determine dashboard title based on available data
+// Determine dashboard title based on available data
   useEffect(() => {
     if (isLoaded && user) {
       // First priority: Use domain from metadata if available
@@ -561,21 +562,13 @@ export default function DashboardPage() {
         setHasCompletedOnboarding(true);
       }
       
-      // Load conversion rate from metadata if available
-      if (user.unsafeMetadata?.conversionRate) {
-        const storedRate = parseFloat(user.unsafeMetadata.conversionRate);
-        if (!isNaN(storedRate) && storedRate > 0) {
-          setUserConversionRate(storedRate);
-          console.log(`Loaded conversion rate from metadata: ${storedRate}%`);
-          
-          // Also initialize synthetic calculator with this value
-          setSyntheticConversionRate(storedRate.toString());
-          
-          // For real-world data, use the improved conversion rate (32% improvement)
-          const improvedRate = storedRate * 1.32;
-          setRealConversionRate(improvedRate.toFixed(2));
-        }
-      }
+      // Add these lines directly here (not in a nested useEffect)
+      // For synthetic calculator
+      setSyntheticConversionRate(HARDCODED_CONVERSION_RATE.toString());
+      
+      // For real-world data - use improved rate (32% higher)
+      const improvedRate = HARDCODED_CONVERSION_RATE * 1.32;
+      setRealConversionRate(improvedRate.toFixed(2));
     }
   }, [user, isLoaded]);
 
