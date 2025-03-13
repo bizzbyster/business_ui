@@ -207,11 +207,8 @@ const getConversionRateForLcp = (lcp: number): number => {
   return Math.max(0, Math.min(maxRate, rate));
 };
 
-// Base conversion rate - change this value to adjust all conversion rates
-const BASE_CONVERSION_RATE = 4;
-
 // Generate histogram data based on the logic
-const createLogicalHistogramData = () => {
+const createLogicalHistogramData = (userConversionRate = 4) => {
   // Create bins with specific ranges
   const binRanges = [
     { start: 0, end: 500, label: '0-0.5s' },
@@ -290,8 +287,8 @@ const createLogicalHistogramData = () => {
       0.277  // 5-6s (27.7% of base rate)
     ];
     
-    // Calculate conversion percentages based on BASE_CONVERSION_RATE
-    const conversionPercentages = baseConversionRatios.map(ratio => ratio * BASE_CONVERSION_RATE);
+    // Calculate conversion percentages based on user's conversion rate
+    const conversionPercentages = baseConversionRatios.map(ratio => ratio * userConversionRate);
     
     // Calculate number of converted sessions
     const clippoConverted = Math.round(clippoSessions * (conversionPercentages[index] / 100));
@@ -450,6 +447,9 @@ export default function DashboardPage() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isChartLoaded, setIsChartLoaded] = useState(false);
   
+  // Add state for user's conversion rate
+  const [userConversionRate, setUserConversionRate] = useState(4); // Default to 4%
+  
   // Revenue calculator states for synthetic data
   const [syntheticMonthlyVisitors, setSyntheticMonthlyVisitors] = useState('');
   const [syntheticConversionRate, setSyntheticConversionRate] = useState('');
@@ -484,13 +484,15 @@ export default function DashboardPage() {
   // Generate LCP distribution data
   useEffect(() => {
     const data = generateRealPercentileData();
-    const { histogramData, averages } = createLogicalHistogramData();
+    
+    // Pass the user's conversion rate to the histogram data generator
+    const { histogramData, averages } = createLogicalHistogramData(userConversionRate);
     
     setPercentileData(data);
     setHistogramData(histogramData);
     setAverageRates(averages);
     setIsChartLoaded(true);
-  }, []);
+  }, [userConversionRate]); // Add userConversionRate as a dependency
   
   // Calculate revenue boost for synthetic data
   const calculateSyntheticRevenueBoost = useCallback(() => {
@@ -557,6 +559,22 @@ export default function DashboardPage() {
       // Check if user has completed onboarding
       if (user.unsafeMetadata?.termsAccepted === true) {
         setHasCompletedOnboarding(true);
+      }
+      
+      // Load conversion rate from metadata if available
+      if (user.unsafeMetadata?.conversionRate) {
+        const storedRate = parseFloat(user.unsafeMetadata.conversionRate);
+        if (!isNaN(storedRate) && storedRate > 0) {
+          setUserConversionRate(storedRate);
+          console.log(`Loaded conversion rate from metadata: ${storedRate}%`);
+          
+          // Also initialize synthetic calculator with this value
+          setSyntheticConversionRate(storedRate.toString());
+          
+          // For real-world data, use the improved conversion rate (32% improvement)
+          const improvedRate = storedRate * 1.32;
+          setRealConversionRate(improvedRate.toFixed(2));
+        }
       }
     }
   }, [user, isLoaded]);
