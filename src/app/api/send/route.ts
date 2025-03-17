@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
+import { createEntitiesForSyntheticTest } from "@/db/dynamo-db/queries";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = new Resend(resendApiKey);
@@ -30,6 +31,16 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Invalid email format" },
         { status: 400 }
+      );
+    }
+
+    try {
+      await createEntitiesForSyntheticTest(domain, email);
+    } catch (e) {
+      console.error("error creating temp entities on dynamodb", e);
+      return NextResponse.json(
+        { error: "Invalid email format" },
+        { status: 500 }
       );
     }
 
