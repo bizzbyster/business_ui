@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, CircularProgress, Typography, Paper } from '@mui/material';
 import { branding } from "@/config/branding";
 
-export default function DomainHandler() {
+// Create a separate component that uses search params
+function DomainHandlerContent() {
   const { user, isLoaded, isSignedIn } = useUser();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -118,5 +119,18 @@ export default function DomainHandler() {
         )}
       </Paper>
     </Box>
+  );
+}
+
+// Main component with Suspense
+export default function DomainHandler() {
+  return (
+    <Suspense fallback={
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    }>
+      <DomainHandlerContent />
+    </Suspense>
   );
 }

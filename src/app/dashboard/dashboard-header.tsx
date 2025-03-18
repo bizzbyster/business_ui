@@ -72,9 +72,9 @@ export default function DashboardHeader() {
               }
             }}
             createOrganizationUrl="/dashboard"
-            createOrganizationMode="modal"
+            // Remove the createOrganizationMode property
             organizationProfileUrl="/dashboard"
-            organizationProfileMode="modal"
+            // Remove the organizationProfileMode property
           />
           <UserButton afterSignOutUrl="/" />
         </Box>
