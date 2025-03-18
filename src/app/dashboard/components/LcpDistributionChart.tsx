@@ -59,7 +59,7 @@ export const LcpDistributionChart: React.FC<LcpDistributionChartProps> = ({
             />
           </YAxis>
 
-          <ReferenceLine y={75} stroke="#666" strokeDasharray="3 3" />
+          <ReferenceLine y={75} stroke="#555" strokeDasharray="3 3" />
 
           <Tooltip
             cursor={{ strokeDasharray: "3 3" }}
