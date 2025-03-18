@@ -34,7 +34,7 @@ export const LcpDistributionChart: React.FC<LcpDistributionChartProps> = ({
             dataKey="lcp"
             name="LCP"
             unit="ms"
-            domain={["dataMin", "dataMax"]}
+            domain={["auto"]}
           >
             <Label
               value="Load Time (milliseconds)"
