@@ -21,6 +21,7 @@ import DevicesIcon from '@mui/icons-material/Devices';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { branding } from '@/config/branding';
+import { DomainCapture } from './domain-capture';
 
 // Define interfaces
 interface PercentileDataPoint {
@@ -538,39 +539,41 @@ export default function DashboardPage() {
     }
   }, [realMonthlyVisitors, realConversionRate, realAverageOrderValue]);
   
-// Determine dashboard title based on available data
-  useEffect(() => {
-    if (isLoaded && user) {
-      // First priority: Use domain from metadata if available
-      if (user.unsafeMetadata?.domain) {
-        setDashboardTitle(`${user.unsafeMetadata.domain}'s Performance Dashboard`);
-      } 
-      // Second priority: Use user's name
-      else if (user.fullName) {
-        setDashboardTitle(`${user.fullName}'s Performance Dashboard`);
-      }
-      else if (user.firstName) {
-        setDashboardTitle(`${user.firstName}'s Performance Dashboard`);
-      }
-      else if (user.username) {
-        setDashboardTitle(`${user.username}'s Performance Dashboard`);
-      }
-      // Default title is already set
-      
-      // Check if user has completed onboarding
-      if (user.unsafeMetadata?.termsAccepted === true) {
-        setHasCompletedOnboarding(true);
-      }
-      
-      // Add these lines directly here (not in a nested useEffect)
-      // For synthetic calculator
-      setSyntheticConversionRate(HARDCODED_CONVERSION_RATE.toString());
-      
-      // For real-world data - use improved rate (32% higher)
-      const improvedRate = HARDCODED_CONVERSION_RATE * 1.32;
-      setRealConversionRate(improvedRate.toFixed(2));
+// In dashboard page.tsx, modify the useEffect for dashboard title
+useEffect(() => {
+  if (isLoaded) {
+    // First check Clerk metadata
+    const domainFromMetadata = user?.unsafeMetadata?.domain;
+    
+    // Then check localStorage as fallback
+    const domainFromLocalStorage = typeof window !== 'undefined' ? localStorage.getItem('clippo_domain') : null;
+    
+    // Use domain from metadata or localStorage or fallback to user's name
+    if (domainFromMetadata) {
+      console.log("Using domain from metadata:", domainFromMetadata);
+      setDashboardTitle(`${domainFromMetadata}'s Performance Dashboard`);
+    } 
+    else if (domainFromLocalStorage) {
+      console.log("Using domain from localStorage:", domainFromLocalStorage);
+      setDashboardTitle(`${domainFromLocalStorage}'s Performance Dashboard`);
     }
-  }, [user, isLoaded]);
+    else if (user?.fullName) {
+      console.log("Using fullName for title:", user.fullName);
+      setDashboardTitle(`${user.fullName}'s Performance Dashboard`);
+    }
+    else if (user?.firstName) {
+      setDashboardTitle(`${user.firstName}'s Performance Dashboard`);
+    }
+    else if (user?.username) {
+      setDashboardTitle(`${user.username}'s Performance Dashboard`);
+    }
+    
+    // Check if user has completed onboarding
+    if (user?.unsafeMetadata?.termsAccepted === true) {
+      setHasCompletedOnboarding(true);
+    }
+  }
+}, [user, isLoaded]);
 
   // Calculate real-world revenue boost on tab change
   useEffect(() => {
@@ -629,6 +632,7 @@ export default function DashboardPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      <DomainCapture />
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 500 }}>
           {dashboardTitle}
