@@ -1,17 +1,24 @@
 import { clickhouse } from "./config";
 
+export type RunType = "baseline" | "snappi";
+
 export interface LCPDistribution {
+  run_type: RunType;
+  load_time: number;
   percentile: number;
-  baseline_lcp: number;
-  snappi_lcp: number;
 }
 
 export interface WebVitalsSummary {
-  runType: "baseline" | "snappi";
+  runType: RunType;
   avg_fcp: number;
   avg_lcp: number;
   avg_ttfb: number;
   samples: string;
+}
+
+export interface SyntheticQuickStat {
+  run_type: RunType;
+  p75_load_time: number;
 }
 
 export async function clickhousePing() {
@@ -19,96 +26,87 @@ export async function clickhousePing() {
   console.dir(res, { depth: null });
 }
 
-export async function getLCPDistribution() {
+export async function getLCPDistribution(domain: string) {
   const query = `
-    WITH lcp_stats AS (
+    WITH 
+    metrics AS (
+      SELECT 
+        runType as run_type,
+        lcp AS load_time
+      FROM web_performance_metrics
+      WHERE lcp IS NOT NULL
+        AND lcp > 0  -- Exclude zero values
+        AND run_type IN ('snappi', 'baseline')
+        AND domain LIKE {domain: String}
+    ),
+    percentiles AS (
+      SELECT
+        run_type,
+        load_time,
+        count(*) OVER (PARTITION BY run_type ORDER BY load_time) / 
+        count(*) OVER (PARTITION BY run_type) AS percentile
+      FROM metrics
+      ORDER BY run_type, load_time
+    )
     SELECT
-        runType,
-        min(CASE WHEN lcp > 0 THEN toInt32(lcp) END) AS min_lcp,
-        max(toInt32(lcp)) AS max_lcp,
-        quantilesExact(0.25, 0.5, 0.75, 0.9, 0.95)(toInt32(lcp)) AS lcp_quantiles
-    FROM web_performance_metrics
-    WHERE domain = 'timex.com'
-      AND session_start_date >= today() - 14
-      AND lcp > 0
-    GROUP BY runType
-),
-formatted_stats AS (
-    SELECT
-        runType,
-        0 AS percentile,
-        min_lcp AS value
-    FROM lcp_stats
-    UNION ALL
-    SELECT
-        runType,
-        25 AS percentile,
-        lcp_quantiles[1] AS value
-    FROM lcp_stats
-    UNION ALL
-    SELECT
-        runType,
-        50 AS percentile,
-        lcp_quantiles[2] AS value
-    FROM lcp_stats
-    UNION ALL
-    SELECT
-        runType,
-        75 AS percentile,
-        lcp_quantiles[3] AS value
-    FROM lcp_stats
-    UNION ALL
-    SELECT
-        runType,
-        90 AS percentile,
-        lcp_quantiles[4] AS value
-    FROM lcp_stats
-    UNION ALL
-    SELECT
-        runType,
-        95 AS percentile,
-        lcp_quantiles[5] AS value
-    FROM lcp_stats
-    UNION ALL
-    SELECT
-        runType,
-        100 AS percentile,
-        max_lcp AS value
-    FROM lcp_stats
-)
-SELECT
-    f1.percentile,
-    maxIf(f1.value, f1.runType = 'baseline') AS baseline_lcp,
-    maxIf(f1.value, f1.runType = 'snappi') AS snappi_lcp
-FROM formatted_stats f1
-GROUP BY percentile
-ORDER BY percentile;
+      run_type,
+      load_time,
+      percentile
+    FROM percentiles
+    ORDER BY run_type, load_time;
   `;
   const rows = await clickhouse.query({
     query,
     format: "JSONEachRow",
+    query_params: { domain: `%${domain}%` },
   });
 
   return await rows.json<LCPDistribution>();
 }
 
 // For the Core Web Vitals Summary
-export async function getWebVitalsSummary() {
+export async function getWebVitalsSummary(domain: string) {
   const query = `
     SELECT 
     runType,
-    round(avg(fcp), 0) AS avg_fcp,
-    round(avg(lcp), 0) AS avg_lcp,
-    round(avg(ttfb), 0) AS avg_ttfb,
+    round(median(fcp), 0) AS avg_fcp,
+    round(median(lcp), 0) AS avg_lcp,
+    round(median(ttfb), 0) AS avg_ttfb,
     count() AS samples
     FROM web_performance_metrics
-    WHERE domain = 'timex.com'
+    WHERE domain LIKE {domain: String}
     AND session_start_date >= today() - 7
     GROUP BY runType
     ORDER BY runType;`;
   const rows = await clickhouse.query({
     query,
     format: "JSONEachRow",
+    query_params: { domain: `%${domain}%` },
   });
   return await rows.json<WebVitalsSummary>();
+}
+
+export async function getSyntheticQuickStats(domain: string) {
+  const query = `
+    WITH 
+    metrics AS (
+      SELECT 
+        runType AS run_type,
+        lcp AS load_time
+      FROM web_performance_metrics
+      WHERE domain LIKE {domain: String}
+        AND session_start_date >= today() - 14
+        AND lcp > 0
+    )
+    SELECT
+      run_type,
+      quantile(0.75)(load_time) AS p75_load_time
+    FROM metrics
+    GROUP BY run_type`;
+  const rows = await clickhouse.query({
+    query,
+    format: "JSONEachRow",
+    query_params: { domain: `%${domain}%` },
+  });
+  return await rows.json<SyntheticQuickStat>();
 }

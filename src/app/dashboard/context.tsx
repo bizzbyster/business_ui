@@ -1,11 +1,17 @@
 "use client";
 
-import { LCPDistribution, WebVitalsSummary } from "@/db/clickhouse-db/queries";
+import {
+  LCPDistribution,
+  SyntheticQuickStat,
+  WebVitalsSummary,
+} from "@/db/clickhouse-db/queries";
 import { createContext, ReactNode, useContext } from "react";
 
 interface DashboardContextStore {
   lcpDistribution: LCPDistribution[];
   webVitalsSummary: WebVitalsSummary[];
+  syntheticQuickStats: SyntheticQuickStat[];
+  domain?: string;
 }
 
 const DashboardContext = createContext<DashboardContextStore | null>(null);

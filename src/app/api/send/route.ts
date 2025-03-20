@@ -120,7 +120,7 @@ export async function POST(req: Request) {
 
           <div style="text-align: center; margin-top: 30px;">
             <a 
-              href="${BASE_URL}/sign-up" 
+              href="${BASE_URL}/api/sign-up?d=${btoa(domain)}"
               style="
                 display: inline-block; 
                 padding: 12px 24px; 

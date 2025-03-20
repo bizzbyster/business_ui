@@ -4,21 +4,30 @@ import { branding } from "@/config/branding";
 import Link from "next/link";
 import {
   getLCPDistribution,
+  getSyntheticQuickStats,
   getWebVitalsSummary,
 } from "@/db/clickhouse-db/queries";
 import DashboardContextProvider from "./context";
+import { cookies } from "next/headers";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [lcpDistribution, webVitalsSummary] = await Promise.all([
-    getLCPDistribution(),
-    getWebVitalsSummary(),
-  ]);
+  const c = await cookies();
+  let domain = c.get("d")?.value;
+  if (domain) domain = atob(domain);
+  const [lcpDistribution, webVitalsSummary, syntheticQuickStats] =
+    await Promise.all([
+      getLCPDistribution(`${domain}`),
+      getWebVitalsSummary(`${domain}`),
+      getSyntheticQuickStats(`${domain}`),
+    ]);
   return (
-    <DashboardContextProvider data={{ lcpDistribution, webVitalsSummary }}>
+    <DashboardContextProvider
+      data={{ lcpDistribution, webVitalsSummary, syntheticQuickStats, domain }}
+    >
       <div>
         <AppBar
           position="static"

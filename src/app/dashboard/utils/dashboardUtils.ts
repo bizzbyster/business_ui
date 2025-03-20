@@ -1,21 +1,4 @@
-import { branding } from "@/config/branding";
-import SpeedIcon from "@mui/icons-material/Speed";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-
-// Define TypeScript interfaces
-interface WebVitalMetric {
-  runType: string;
-  avg_lcp: number;
-  avg_fcp: number;
-  avg_ttfb: number;
-  samples: string;
-}
-
-interface LcpDataPoint {
-  percentile: number;
-  baseline_lcp: number;
-  snappi_lcp: number;
-}
+import { WebVitalsSummary } from "@/db/clickhouse-db/queries";
 
 interface WebVital {
   metric: string;
@@ -23,15 +6,6 @@ interface WebVital {
   optimized: number;
   target: number;
   unit: string;
-}
-
-interface StatCard {
-  icon: typeof SpeedIcon | typeof TrendingUpIcon;
-  title: string;
-  value: string;
-  change: string;
-  color: string;
-  explanation: string;
 }
 
 interface HistogramBin {
@@ -58,77 +32,8 @@ interface HistogramData {
 }
 
 // This will be created dynamically with real data
-export const getQuickStats = (
-  webVitalsSummary: WebVitalMetric[] | undefined,
-  lcpDistribution: LcpDataPoint[] | undefined
-): StatCard[] => {
-  // Find baseline and snappi metrics
-  const baselineMetrics = webVitalsSummary?.find(
-    (item) => item.runType === "baseline"
-  ) || {
-    avg_lcp: 2755,
-    avg_fcp: 1420,
-    avg_ttfb: 322,
-  };
-
-  const snappiMetrics = webVitalsSummary?.find(
-    (item) => item.runType === "snappi"
-  ) || {
-    avg_lcp: 2577,
-    avg_fcp: 1310,
-    avg_ttfb: 320,
-  };
-
-  // Find 75th percentile LCP values
-  const p75Baseline =
-    lcpDistribution?.find((d) => d.percentile === 75)?.baseline_lcp || 3901;
-  const p75Snappi =
-    lcpDistribution?.find((d) => d.percentile === 75)?.snappi_lcp || 3201;
-
-  // Calculate improvements
-  const lcpImprovement = Math.round(
-    ((p75Baseline - p75Snappi) / p75Baseline) * 100
-  );
-
-  // Estimate conversion impact - 1% improvement for every 100ms of LCP reduction
-  const lcpDifference = p75Baseline - p75Snappi;
-  const estimatedConversionImpact = Math.round(lcpDifference / 100);
-
-  return [
-    {
-      icon: SpeedIcon,
-      title: "Current LCP",
-      value: `${Math.round(p75Baseline)}ms`,
-      change: p75Baseline < 2500 ? "✓ Good" : "↓ Needs Improvement",
-      color: p75Baseline < 2500 ? "#4caf50" : branding.secondaryColor,
-      explanation: `Your current Largest Contentful Paint (LCP) at 75th percentile is ${Math.round(
-        p75Baseline
-      )}ms. This means 75% of your page loads complete their main content render within this time. An LCP under 2500ms is considered "good" by Google, but every millisecond counts and can affect business metrics.`,
-    },
-    {
-      icon: SpeedIcon,
-      title: "Projected LCP",
-      value: `${Math.round(p75Snappi)}ms`,
-      change: `↑ ${lcpImprovement}% Faster with Snappi`,
-      color: branding.primaryColor,
-      explanation: `Based on our tests and real-world data, Snappi reduces your LCP to approximately ${Math.round(
-        p75Snappi
-      )}ms at the 75th percentile. This ${lcpImprovement}% improvement is achieved through advanced caching, optimized resource loading, and efficient content delivery.`,
-    },
-    {
-      icon: TrendingUpIcon,
-      title: "Conversion Impact",
-      value: `+${estimatedConversionImpact}%`,
-      change: "↑ Estimated Increase",
-      color: branding.primaryColor,
-      explanation: `Research shows that faster load times directly correlate with improved conversion rates. Based on the projected ${lcpImprovement}% speed improvement, and considering industry benchmarks where a 100ms decrease in load time can improve conversion rates by 1%, we estimate a potential ${estimatedConversionImpact}% increase in your conversion rate.`,
-    },
-  ];
-};
-
-// This will be created dynamically with real data
 export const getWebVitals = (
-  webVitalsSummary: WebVitalMetric[] | undefined
+  webVitalsSummary: WebVitalsSummary[] | undefined
 ): WebVital[] => {
   // Find baseline and snappi metrics
   const baselineMetrics = webVitalsSummary?.find(

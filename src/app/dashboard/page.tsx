@@ -30,7 +30,6 @@ import { RevenueCalculator } from "./components/RevenueCalculator";
 
 // Import utilities
 import {
-  getQuickStats,
   getWebVitals,
   createLogicalHistogramData,
 } from "./utils/dashboardUtils";
@@ -42,34 +41,18 @@ const CONVERSION_INCREASE_PERCENT = 32;
 
 export default function DashboardPage() {
   // Get data from context
-  const { lcpDistribution, webVitalsSummary } = useDashboardContext();
+  const { lcpDistribution, webVitalsSummary, syntheticQuickStats, domain } =
+    useDashboardContext();
 
   const { user, isLoaded } = useUser();
   const router = useRouter();
-
-  // Calculate improvement percentages for stats cards
-  const baselineMetrics = webVitalsSummary?.find(
-    (item) => item.runType === "baseline"
-  );
-  const snappiMetrics = webVitalsSummary?.find(
-    (item) => item.runType === "snappi"
-  );
-
-  // Calculate LCP improvement if data exists
-  const baselineLCP = baselineMetrics?.avg_lcp || 2755;
-  const snappiLCP = snappiMetrics?.avg_lcp || 2577;
-  const lcpImprovement =
-    baselineLCP > 0
-      ? Math.round(((baselineLCP - snappiLCP) / baselineLCP) * 100)
-      : 7;
 
   const [dashboardTitle, setDashboardTitle] = useState("Performance Dashboard");
   const [tabValue, setTabValue] = useState(0);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isChartLoaded, setIsChartLoaded] = useState(false);
 
-  // Generate dynamic stats based on real data
-  const quickStats = getQuickStats(webVitalsSummary, lcpDistribution);
+  // Get webVitals data
   const webVitals = getWebVitals(webVitalsSummary);
 
   // Revenue calculator states for synthetic data
@@ -98,19 +81,73 @@ export default function DashboardPage() {
     nonSnappiAvgConversionRate: number;
   }>({ snappiAvgConversionRate: 0, nonSnappiAvgConversionRate: 0 });
 
-  // Transform LCP data for charts
+  // Transform LCP data for charts - Updated for new interface
   const formattedLcpDistribution = {
     snappiData:
-      lcpDistribution?.map((point) => ({
-        percentile: point.percentile,
-        lcp: point.snappi_lcp,
-      })) || [],
+      lcpDistribution
+        ?.filter((point) => point.run_type === "snappi")
+        .map((point) => ({
+          percentile: point.percentile * 100, // Convert from 0-1 to 0-100 if needed
+          lcp: point.load_time,
+        })) || [],
     nonSnappiData:
-      lcpDistribution?.map((point) => ({
-        percentile: point.percentile,
-        lcp: point.baseline_lcp,
-      })) || [],
+      lcpDistribution
+        ?.filter((point) => point.run_type === "baseline")
+        .map((point) => ({
+          percentile: point.percentile * 100, // Convert from 0-1 to 0-100 if needed
+          lcp: point.load_time,
+        })) || [],
   };
+
+  // Find the p75 values from the syntheticQuickStats
+  const baselineP75 =
+    syntheticQuickStats.find((item) => item.run_type === "baseline")
+      ?.p75_load_time || 0;
+
+  const snappiP75 =
+    syntheticQuickStats.find((item) => item.run_type === "snappi")
+      ?.p75_load_time || 0;
+
+  // Calculate improvement percentage for the quick stats
+  const p75Improvement = Math.round(
+    ((baselineP75 - snappiP75) / baselineP75) * 100
+  );
+
+  // Estimate conversion impact - 1% improvement for every 100ms of LCP reduction
+  const p75Difference = baselineP75 - snappiP75;
+  const estimatedConversionImpact = Math.round(p75Difference / 100);
+
+  // Create quick stats cards using the p75 data
+  const quickStats = [
+    {
+      icon: SpeedIcon,
+      title: "Current LCP",
+      value: `${Math.round(baselineP75)}ms`,
+      change: baselineP75 < 2500 ? "✓ Good" : "↓ Needs Improvement",
+      color: baselineP75 < 2500 ? "#4caf50" : branding.secondaryColor,
+      explanation: `Your current Largest Contentful Paint (LCP) at 75th percentile is ${Math.round(
+        baselineP75
+      )}ms. This means 75% of your page loads complete their main content render within this time. An LCP under 2500ms is considered "good" by Google, but every millisecond counts and can affect business metrics.`,
+    },
+    {
+      icon: SpeedIcon,
+      title: "Projected LCP",
+      value: `${Math.round(snappiP75)}ms`,
+      change: `↑ ${p75Improvement}% Faster with Snappi`,
+      color: branding.primaryColor,
+      explanation: `Based on our tests and real-world data, Snappi reduces your LCP to approximately ${Math.round(
+        snappiP75
+      )}ms at the 75th percentile. This ${p75Improvement}% improvement is achieved through advanced caching, optimized resource loading, and efficient content delivery.`,
+    },
+    {
+      icon: TrendingUpIcon,
+      title: "Conversion Impact",
+      value: `+${estimatedConversionImpact}%`,
+      change: "↑ Estimated Increase",
+      color: branding.primaryColor,
+      explanation: `Research shows that faster load times directly correlate with improved conversion rates. Based on the projected ${p75Improvement}% speed improvement, and considering industry benchmarks where a 100ms decrease in load time can improve conversion rates by 1%, we estimate a potential ${estimatedConversionImpact}% increase in your conversion rate.`,
+    },
+  ];
 
   // Generate histogram data for conversion charts
   useEffect(() => {
@@ -174,10 +211,8 @@ export default function DashboardPage() {
   useEffect(() => {
     if (isLoaded && user) {
       // First priority: Use domain from metadata if available
-      if (user.unsafeMetadata?.domain) {
-        setDashboardTitle(
-          `${user.unsafeMetadata.domain}'s Performance Dashboard`
-        );
+      if (domain) {
+        setDashboardTitle(`${domain}'s Performance Dashboard`);
       }
       // Second priority: Use user's name
       else if (user.fullName) {
@@ -194,7 +229,7 @@ export default function DashboardPage() {
         setHasCompletedOnboarding(true);
       }
     }
-  }, [user, isLoaded]);
+  }, [user, isLoaded, domain]);
 
   // Calculate real-world revenue boost on tab change
   useEffect(() => {
@@ -216,7 +251,19 @@ export default function DashboardPage() {
     }
   };
 
-  if (!isChartLoaded || !isLoaded || !lcpDistribution || !webVitalsSummary) {
+  // Helper function to find percentile value
+  const findPercentileLoadTime = (data: Array<any>, percentile: number) => {
+    const point = data.find((d) => Math.round(d.percentile) === percentile);
+    return Math.round(point?.lcp || 0);
+  };
+
+  if (
+    !isChartLoaded ||
+    !isLoaded ||
+    !lcpDistribution ||
+    !webVitalsSummary ||
+    !syntheticQuickStats
+  ) {
     return (
       <Container maxWidth="lg">
         <Box sx={{ mt: 4 }}>
@@ -296,18 +343,8 @@ export default function DashboardPage() {
                     the largest content element (like a hero image or headline)
                     appears on screen. The distribution demonstrates that with
                     Snappi, 75% of your page loads complete the main content
-                    render in under{" "}
-                    {Math.round(
-                      formattedLcpDistribution.snappiData.find(
-                        (d) => d.percentile === 75
-                      )?.lcp || 3200
-                    )}
-                    ms – faster than the baseline{" "}
-                    {Math.round(
-                      formattedLcpDistribution.nonSnappiData.find(
-                        (d) => d.percentile === 75
-                      )?.lcp || 3900
-                    )}
+                    render in under {Math.round(snappiP75)}
+                    ms – faster than the baseline {Math.round(baselineP75)}
                     ms. This improvement directly impacts user experience and
                     engagement, as visitors see your key content sooner.
                   </Typography>
@@ -329,7 +366,7 @@ export default function DashboardPage() {
                   averageOrderValue={syntheticAverageOrderValue}
                   revenueBoost={syntheticRevenueBoost}
                   showCalculations={showSyntheticCalculations}
-                  lcpImprovement={lcpImprovement}
+                  lcpImprovement={p75Improvement}
                   conversionIncrease={12} // 12% is the default conversion increase for synthetic
                   onChangeVisitors={(value) =>
                     setSyntheticMonthlyVisitors(value)
@@ -400,18 +437,9 @@ export default function DashboardPage() {
                     This chart shows the distribution of page load times across
                     different percentiles of traffic. With Snappi (green), the
                     75th percentile of page loads complete in approximately{" "}
-                    {Math.round(
-                      formattedLcpDistribution.snappiData.find(
-                        (d) => d.percentile === 75
-                      )?.lcp || 3200
-                    )}
+                    {Math.round(snappiP75)}
                     milliseconds, whereas without Snappi (gray), the 75th
-                    percentile loads take about{" "}
-                    {Math.round(
-                      formattedLcpDistribution.nonSnappiData.find(
-                        (d) => d.percentile === 75
-                      )?.lcp || 3900
-                    )}{" "}
+                    percentile loads take about {Math.round(baselineP75)}{" "}
                     milliseconds. This significant improvement impacts all users
                     across the entire distribution, with even greater gains at
                     the lower percentiles.
@@ -500,7 +528,7 @@ export default function DashboardPage() {
                 conversionRate={realConversionRate}
                 averageOrderValue={realAverageOrderValue}
                 revenueBoost={realRevenueBoost}
-                lcpImprovement={lcpImprovement}
+                lcpImprovement={p75Improvement}
                 conversionIncrease={CONVERSION_INCREASE_PERCENT}
                 onChangeVisitors={(value) => setRealMonthlyVisitors(value)}
                 onChangeConversionRate={(value) => setRealConversionRate(value)}
