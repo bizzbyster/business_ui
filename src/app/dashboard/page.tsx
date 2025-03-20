@@ -454,7 +454,7 @@ export default function DashboardPage() {
                     dataKeyNonConverted="snappiNonConverted"
                     dataKeyConverted="snappiConverted"
                     dataKeyConversionRate="snappiConversionRate"
-                    color="#2e8b57"
+                    color={branding.primaryColor}
                   />
                   <Typography
                     variant="body2"
@@ -490,7 +490,7 @@ export default function DashboardPage() {
                     dataKeyNonConverted="nonSnappiNonConverted"
                     dataKeyConverted="nonSnappiConverted"
                     dataKeyConversionRate="nonSnappiConversionRate"
-                    color="#808080"
+                    color={branding.secondaryColor}
                   />
                   <Typography
                     variant="body2"

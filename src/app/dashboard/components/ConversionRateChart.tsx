@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { Box } from "@mui/material";
 import { CustomTooltip } from "./CustomTooltip";
+import { branding } from "@/config/branding";
 
 interface ConversionRateChartProps {
   data: any[];
@@ -28,7 +29,6 @@ interface ConversionRateChartProps {
 export const ConversionRateChart: React.FC<ConversionRateChartProps> = ({
   data,
   averageRate,
-  title,
   dataKeyNonConverted,
   dataKeyConverted,
   dataKeyConversionRate,
@@ -70,14 +70,14 @@ export const ConversionRateChart: React.FC<ConversionRateChartProps> = ({
             yAxisId="left"
             dataKey={dataKeyNonConverted}
             name="Non-Converted Sessions"
-            fill="#ff9999"
+            fill="#808080"
             stackId="a"
           />
           <Bar
             yAxisId="left"
             dataKey={dataKeyConverted}
             name="Converted Sessions"
-            fill="#82ca9d"
+            fill={color}
             stackId="a"
           />
           <Line
