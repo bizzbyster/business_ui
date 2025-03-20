@@ -8,14 +8,19 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "inventory": "NODE_OPTIONS='--loader ts-node/esm' node scripts/findCodeFiles.ts"
+    "inventory": "NODE_OPTIONS='--loader ts-node/esm' node scripts/findCodeFiles.ts",
+    "seed-clickhouse": "node src/db/clickhouse-db/seed.js"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.751.0",
+    "@aws-sdk/lib-dynamodb": "^3.751.0",
     "@clerk/nextjs": "^6.9.15",
+    "@clickhouse/client": "^1.10.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.0",
     "@mui/material": "^6.4.0",
+    "luxon": "^3.5.0",
     "next": "15.1.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -24,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/luxon": "^3.4.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -34,5 +40,6 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "npm@10.9.1"
 }

@@ -1,4 +1,4 @@
-import { ClerkProvider } from '@clerk/nextjs';
+import { ClerkProvider } from "@clerk/nextjs";
 import ThemeRegistry from "../components/ThemeRegistry";
 
 export const metadata = {
@@ -9,17 +9,17 @@ export const metadata = {
 };
 
 export default function RootLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    return (
-        <html lang="en">
-            <body>
-                <ClerkProvider>
-                    <ThemeRegistry>{children}</ThemeRegistry>
-                </ClerkProvider>
-            </body>
-        </html>
-    );
+  return (
+    <html lang="en">
+      <body>
+        <ClerkProvider>
+          <ThemeRegistry>{children}</ThemeRegistry>
+        </ClerkProvider>
+      </body>
+    </html>
+  );
 }
