@@ -21,14 +21,12 @@ import { useRouter } from "next/navigation";
 import { branding } from "@/config/branding";
 import { useDashboardContext } from "./context";
 
-// Import components
 import { StatsCard } from "./components/StatsCard";
 import { LcpDistributionChart } from "./components/LcpDistributionChart";
 import { WebVitalsSection } from "./components/WebVitalsSection";
 import { ConversionRateChart } from "./components/ConversionRateChart";
 import { RevenueCalculator } from "./components/RevenueCalculator";
 
-// Import utilities
 import {
   getWebVitals,
   createLogicalHistogramData,
@@ -251,12 +249,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Helper function to find percentile value
-  const findPercentileLoadTime = (data: Array<any>, percentile: number) => {
-    const point = data.find((d) => Math.round(d.percentile) === percentile);
-    return Math.round(point?.lcp || 0);
-  };
-
   if (
     !isChartLoaded ||
     !isLoaded ||
@@ -344,7 +336,7 @@ export default function DashboardPage() {
                     appears on screen. The distribution demonstrates that with
                     Snappi, 75% of your page loads complete the main content
                     render in under {Math.round(snappiP75)}
-                    ms – faster than the baseline {Math.round(baselineP75)}
+                    ms - faster than the baseline {Math.round(baselineP75)}
                     ms. This improvement directly impacts user experience and
                     engagement, as visitors see your key content sooner.
                   </Typography>

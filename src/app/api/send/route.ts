@@ -34,6 +34,16 @@ export async function POST(req: Request) {
       );
     }
 
+    // Generate a simple token for the demo
+    // In production, you would use a more secure method and store the token
+    // This generates a simple timestamp-based token
+    const token = `demo-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
+    // Create the magic link URL
+    const magicLinkUrl = `${BASE_URL}/api/magic-link?token=${token}&domain=${encodeURIComponent(
+      domain
+    )}&email=${encodeURIComponent(email)}`;
+
     try {
       await createEntitiesForSyntheticTest(domain, email);
     } catch (e) {
@@ -77,6 +87,18 @@ export async function POST(req: Request) {
       subject: `${domain} Performance Analysis by Clippo`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #333; font-size: 24px;">Great News for ${domain}!</h1>
+          
+          <p style="color: #333; font-size: 16px;">We've completed our analysis and discovered significant opportunities to boost your site performance:</p>
+          
+          <ul style="color: #666; font-size: 16px; margin-bottom: 25px;">
+            <li><strong>Speed Improvement:</strong> Up to 27% faster page loads</li>
+            <li><strong>Conversion Impact:</strong> +12% estimated increase with Clippo</li>
+            <li><strong>Server Response:</strong> 50% faster Time to First Byte</li>
+          </ul>
+          
+          <p style="color: #333; font-size: 16px; margin-bottom: 25px;">Ready to see how we can transform your site experience? Check out your full results below.</p>
+          
           <h1 style="color: #333; font-size: 24px;">Performance Analysis Report for ${domain}</h1>
           
           <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
