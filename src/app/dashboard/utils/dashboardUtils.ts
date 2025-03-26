@@ -37,7 +37,7 @@ export const getWebVitals = (
 ): WebVital[] => {
   // Find baseline and snappi metrics
   const baselineMetrics = webVitalsSummary?.find(
-    (item) => item.runType === "baseline"
+    (item) => item.run_type === "baseline"
   ) || {
     avg_lcp: 2755,
     avg_fcp: 1420,
@@ -45,7 +45,7 @@ export const getWebVitals = (
   };
 
   const snappiMetrics = webVitalsSummary?.find(
-    (item) => item.runType === "snappi"
+    (item) => item.run_type === "snappi"
   ) || {
     avg_lcp: 2577,
     avg_fcp: 1310,
