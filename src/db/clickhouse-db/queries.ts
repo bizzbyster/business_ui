@@ -9,7 +9,7 @@ export interface LCPDistribution {
 }
 
 export interface WebVitalsSummary {
-  runType: RunType;
+  run_type: RunType;
   avg_fcp: number;
   avg_lcp: number;
   avg_ttfb: number;
@@ -31,7 +31,7 @@ export async function getLCPDistribution(domain: string) {
     WITH 
     metrics AS (
       SELECT 
-        runType as run_type,
+        run_type,
         lcp AS load_time
       FROM web_performance_metrics
       WHERE lcp IS NOT NULL
@@ -68,7 +68,7 @@ export async function getLCPDistribution(domain: string) {
 export async function getWebVitalsSummary(domain: string) {
   const query = `
     SELECT 
-    runType,
+    run_type,
     round(median(fcp), 0) AS avg_fcp,
     round(median(lcp), 0) AS avg_lcp,
     round(median(ttfb), 0) AS avg_ttfb,
@@ -76,8 +76,8 @@ export async function getWebVitalsSummary(domain: string) {
     FROM web_performance_metrics
     WHERE domain LIKE {domain: String}
     AND session_start_date >= today() - 7
-    GROUP BY runType
-    ORDER BY runType;`;
+    GROUP BY run_type
+    ORDER BY run_type;`;
   const rows = await clickhouse.query({
     query,
     format: "JSONEachRow",
@@ -91,7 +91,7 @@ export async function getSyntheticQuickStats(domain: string) {
     WITH 
     metrics AS (
       SELECT 
-        runType AS run_type,
+        run_type,
         lcp AS load_time
       FROM web_performance_metrics
       WHERE domain LIKE {domain: String}
