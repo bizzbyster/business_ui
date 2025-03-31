@@ -1,17 +1,18 @@
-import { Resend } from 'resend';
-import { NextResponse } from 'next/server';
+import { Resend } from "resend";
+import { NextResponse } from "next/server";
+import { createEntitiesForSyntheticTest } from "@/db/dynamo-db/queries";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = new Resend(resendApiKey);
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-export const runtime = 'edge';
+export const runtime = "edge";
 
 export async function POST(req: Request) {
   if (!resendApiKey) {
-    console.error('RESEND_API_KEY is not configured');
+    console.error("RESEND_API_KEY is not configured");
     return NextResponse.json(
-      { error: 'Email service not configured' },
+      { error: "Email service not configured" },
       { status: 500 }
     );
   }
@@ -21,14 +22,14 @@ export async function POST(req: Request) {
 
     if (!domain || !email) {
       return NextResponse.json(
-        { error: 'Domain and email are required' },
+        { error: "Domain and email are required" },
         { status: 400 }
       );
     }
 
-    if (!email.includes('@')) {
+    if (!email.includes("@")) {
       return NextResponse.json(
-        { error: 'Invalid email format' },
+        { error: "Invalid email format" },
         { status: 400 }
       );
     }
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
 
     // Send detailed report immediately
     const reportEmailResult = await resend.emails.send({
-      from: 'onboarding@snappi.ai',
+      from: "onboarding@snappi.ai",
       to: email,
       subject: `${domain} Performance Analysis by Clippo`,
       html: `
@@ -61,8 +62,8 @@ export async function POST(req: Request) {
             <h2 style="color: #2e7d32; margin-top: 0;">Core Web Vitals Analysis:</h2>
             
             <div style="margin-bottom: 20px;">
-              <h3 style="margin: 0; color: #666;">Current Performance</h3>
-              <ul style="color: #666;">
+              <h3 style="margin: 0; color: #555;">Current Performance</h3>
+              <ul style="color: #555;">
                 <li>LCP (Largest Contentful Paint): 2200ms - Needs Improvement</li>
                 <li>FCP (First Contentful Paint): 1800ms</li>
                 <li>TTFB (Time to First Byte): 800ms</li>
@@ -70,8 +71,8 @@ export async function POST(req: Request) {
             </div>
 
             <div>
-              <h3 style="margin: 0; color: #666;">Projected With Clippo</h3>
-              <ul style="color: #666;">
+              <h3 style="margin: 0; color: #555;">Projected With Clippo</h3>
+              <ul style="color: #555;">
                 <li>LCP: 1600ms (27% faster)</li>
                 <li>FCP: 1200ms (33% improvement)</li>
                 <li>TTFB: 400ms (50% reduction)</li>
@@ -80,25 +81,25 @@ export async function POST(req: Request) {
           </div>
 
           <h2 style="color: #333;">Business Impact Analysis:</h2>
-          <ul style="color: #666;">
+          <ul style="color: #555;">
             <li><strong>Conversion Impact:</strong> +12% estimated increase based on speed improvements</li>
             <li><strong>Speed Improvement:</strong> Up to 27% faster page loads</li>
             <li><strong>Revenue Opportunity:</strong> Better speeds mean more revenue!</li>
           </ul>
 
           <h2 style="color: #333;">Key Findings:</h2>
-          <ul style="color: #666;">
+          <ul style="color: #555;">
             <li>75% of your page loads can complete under 1.6s with our optimizations</li>
             <li>Potential for significant conversion rate improvements</li>
             <li>Server response time can be reduced by up to 50%</li>
           </ul>
 
           <h2 style="color: #333;">Sounds too good to be true?</h2>
-          <p style="color: #666;">Dive into the details, check out this dashboard we put together to display our full analysis on your site:</p>
+          <p style="color: #555;">Dive into the details, check out this dashboard we put together to display our full analysis on your site:</p>
 
           <div style="text-align: center; margin-top: 30px;">
             <a 
-              href="${magicLinkUrl}" 
+              href="${BASE_URL}/api/sign-up?d=${btoa(domain)}"
               style="
                 display: inline-block; 
                 padding: 12px 24px; 
@@ -113,18 +114,17 @@ export async function POST(req: Request) {
             </a>
           </div>
         </div>
-      `
+      `,
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Analysis completed'
+      message: "Analysis completed",
     });
-
   } catch (error: any) {
-    console.error('API route error:', error);
+    console.error("API route error:", error);
     return NextResponse.json(
-      { error: 'Failed to process request' },
+      { error: "Failed to process request" },
       { status: 500 }
     );
   }
