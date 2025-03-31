@@ -47,8 +47,8 @@ export default function SignInPage() {
                     "bg-primary hover:bg-primary-dark focus:shadow-primary-focus",
                 }
               }}
-              redirectUrl="/dashboard"  // This ensures regular sign-ins go to dashboard
-              afterSignInUrl="/dashboard"  // Double ensuring dashboard redirect
+              redirectUrl="/onboarding"  // This ensures regular sign-ins go to dashboard
+              afterSignInUrl="/onboarding"  // Double ensuring dashboard redirect
             />
           </CardContent>
         </Card>

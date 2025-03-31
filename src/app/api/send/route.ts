@@ -33,39 +33,8 @@ export async function POST(req: Request) {
       );
     }
     
-    // Generate a simple token for the demo
-    // In production, you would use a more secure method and store the token
-    // This generates a simple timestamp-based token
-    const token = `demo-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-    
-    // Create the magic link URL
-    const magicLinkUrl = `${BASE_URL}/api/magic-link?token=${token}&domain=${encodeURIComponent(domain)}&email=${encodeURIComponent(email)}`;
-
-    /* Comment out first email
-    // Send first email immediately
-    const firstEmailResult = await resend.emails.send({
-      from: 'onboarding@snappi.ai',
-      to: email,
-      subject: `Analyzing ${domain} - Initial Performance Check`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1>Analyzing ${domain}'s Performance</h1>
-          <p>We're running a comprehensive speed analysis of your website. Your detailed performance report will be ready in approximately 1 minute.</p>
-          
-          <h2>Our analysis covers:</h2>
-          <ul>
-            <li>Core Web Vitals metrics (LCP, FCP, TTFB)</li>
-            <li>Loading speed across different devices</li>
-            <li>Server response times</li>
-            <li>Performance bottlenecks and optimization opportunities</li>
-            <li>Potential revenue impact of speed improvements</li>
-          </ul>
-          
-          <p>Get ready to discover opportunities to significantly improve your site's speed and user experience.</p>
-        </div>
-      `
-    });
-    */
+    // Use BASE_URL environment variable with the correct path
+    const magicLinkUrl = `${BASE_URL}/teaser-dashboard?domain=${encodeURIComponent(domain)}`;
 
     // Send detailed report immediately
     const reportEmailResult = await resend.emails.send({
