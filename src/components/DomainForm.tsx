@@ -152,7 +152,7 @@ export default function DomainForm() {
               disabled={isSubmitting}
               size="large"
             >
-              {isSubmitting ? "Processing..." : "Get Free Analysis in 1 min"}
+              {isSubmitting ? "Processing..." : "Get Free Analysis in 24 hrs or less"}
             </Button>
           </Box>
         </form>

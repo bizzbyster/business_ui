@@ -55,8 +55,8 @@ export default async function SignUpPage() {
                   formFieldInput: "w-full",
                 },
               }}
-              afterSignUpUrl="/dashboard"
-              afterSignInUrl="/dashboard"
+              afterSignUpUrl="/onboarding"
+              afterSignInUrl="/onboarding"
             />
           </CardContent>
         </Card>
