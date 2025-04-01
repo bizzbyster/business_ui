@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { 
   Container, Typography, Box, Card, CardContent, Grid, 
@@ -169,7 +169,8 @@ const generateLoadTimes = (minTime: number, maxTime: number, count: number, isCl
 const clippoLCP = generateLoadTimes(900, 2100, 40, true);
 const baselineLCP = generateLoadTimes(1300, 3400, 40, false);
 
-export default function TeaserDashboardPage() {
+// Client component that uses useSearchParams
+const TeaserDashboardContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -344,8 +345,14 @@ export default function TeaserDashboardPage() {
                     <Tooltip 
                       cursor={{ strokeDasharray: '3 3' }}
                       formatter={(value, name) => {
-                        if (name === 'lcp') return [`${value.toFixed(0)}ms`, 'Load Time'];
-                        if (name === 'percentile') return [`${value.toFixed(1)}%`, 'Percentile'];
+                        if (name === 'lcp') {
+                          // Check if value is a number before using toFixed
+                          return [`${typeof value === 'number' ? value.toFixed(0) : value}ms`, 'Load Time'];
+                        }
+                        if (name === 'percentile') {
+                          // Check if value is a number before using toFixed
+                          return [`${typeof value === 'number' ? value.toFixed(1) : value}%`, 'Percentile'];
+                        }
                         return [value, name];
                       }}
                     />
@@ -596,5 +603,20 @@ export default function TeaserDashboardPage() {
         </Grid>
       </Grid>
     </Container>
+  );
+};
+
+// Main page component with Suspense boundary
+export default function TeaserDashboardPage() {
+  return (
+    <Suspense fallback={
+      <Container maxWidth="lg">
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+          <Typography>Loading dashboard...</Typography>
+        </Box>
+      </Container>
+    }>
+      <TeaserDashboardContent />
+    </Suspense>
   );
 }

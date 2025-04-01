@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { Container, Typography, Box, Stepper, Step, StepLabel, Card, CardContent, Button, FormControlLabel, Checkbox, Link as MuiLink } from '@mui/material';
 import { branding } from '@/config/branding';
 import CodeSnippet from '@/components/CodeSnippet';
@@ -66,7 +66,7 @@ export default function OnboardingPage() {
   const { user } = useUser();
   const [activeStep, setActiveStep] = useState(0);
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [testStatus, setTestStatus] = useState(null); // null, 'testing', 'success', 'failed'
+  const [testStatus, setTestStatus] = useState<null | 'testing' | 'success' | 'failed'>(null);
   const [originDetails, setOriginDetails] = useState({
     hostname: '',
     port: '443',
@@ -99,7 +99,7 @@ export default function OnboardingPage() {
     if (domainFromUrl) {
       setOriginDetails(prev => ({ ...prev, hostname: domainFromUrl }));
     } else if (domainFromMetadata) {
-      setOriginDetails(prev => ({ ...prev, hostname: domainFromMetadata }));
+      setOriginDetails(prev => ({ ...prev, hostname: `${domainFromMetadata}` }));
     }
   }, [user]);
 
@@ -135,7 +135,7 @@ export default function OnboardingPage() {
     }, 1500);
   };
   
-  const handleOriginDetailsChange = (e) => {
+  const handleOriginDetailsChange = (e:ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setOriginDetails({
       ...originDetails,
